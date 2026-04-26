@@ -6,13 +6,9 @@ const fs = require("fs");
 let mainWindow;
 
 const createWindow = () => {
-  // Load transparent icon - Windows will auto-size for taskbar
-  const iconPath = path.join(__dirname, "icon.png");
-  const appIcon = nativeImage.createFromPath(iconPath);
-  
-  // Windows taskbar typically uses: 16x16, 24x24, 32x32, 48x48
-  // We provide a high-res source and Windows scales it
-  const taskbarIcon = appIcon.resize({ width: 256, height: 256 });
+  // Load icon from assets folder - Windows will auto-size for taskbar
+  const iconPath = path.join(__dirname, "assets", "icon.ico");
+  const taskbarIcon = nativeImage.createFromPath(iconPath);
 
   mainWindow = new BrowserWindow({
     width: 1440,
@@ -253,10 +249,11 @@ ipcMain.handle('fs-unlink', async (event, filePath) => {
 
 app.whenReady().then(() => {
   // Set app icon for taskbar
-  const iconPath = path.join(__dirname, "icon.png");
-  const appIcon = nativeImage.createFromPath(iconPath);
-  const taskbarIcon = appIcon.resize({ width: 256, height: 256 });
-  app.setAppUserModelId('com.ceres.desktop');
+  const iconPath = path.join(__dirname, "assets", "icon.ico");
+  const taskbarIcon = nativeImage.createFromPath(iconPath);
+  if (process.platform === 'win32') {
+    app.setAppUserModelId('com.ceres.ai-agent');
+  }
   
   createWindow();
 
