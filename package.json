@@ -1,0 +1,66 @@
+{
+  "name": "ceres-ai-agent",
+  "productName": "Ceres AI Agent",
+  "version": "1.0.0",
+  "description": "AI-powered coding assistant with file operations, terminal, and multi-agent support.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac",
+    "build:linux": "electron-builder --linux",
+    "dist": "npm run build:win"
+  },
+  "build": {
+    "appId": "com.ceres.ai-agent",
+    "productName": "Ceres AI Agent",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "index.html",
+      "script.js",
+      "agent.js",
+      "styles.css",
+      "node_modules/**/*"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/icon.ico",
+      "signAndEditExecutable": false
+    },
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "icon": "assets/icon.icns",
+      "category": "public.app-category.developer-tools"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb",
+        "rpm"
+      ],
+      "icon": "assets/icons",
+      "category": "Development"
+    }
+  },
+  "devDependencies": {
+    "electron": "^36.3.1",
+    "electron-builder": "^26.8.1",
+    "jimp": "^1.6.1",
+    "to-ico": "^1.1.5"
+  }
+}
