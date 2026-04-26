@@ -30,14 +30,21 @@
     "win": {
       "target": [
         {
-          "target": "portable",
-          "arch": [
-            "x64"
-          ]
+          "target": "nsis",
+          "arch": ["x64"]
         }
       ],
       "icon": "assets/icon.ico",
       "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "assets/icon.ico",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Ceres AI Agent",
+      "deleteAppDataOnUninstall": false
     },
     "mac": {
       "target": [
