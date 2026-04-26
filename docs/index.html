@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ceres AI Agent - Your Intelligent Coding Companion</title>
+    <link rel="icon" type="image/x-icon" href="../assets/icon.ico">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #0a0a0a;
+            color: #fff;
+            line-height: 1.6;
+        }
+        
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 10, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 1000;
+            padding: 16px 48px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #3b82f6, #22c55e);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 32px;
+        }
+        
+        .nav-links a {
+            color: #a1a1aa;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+        
+        .nav-links a:hover {
+            color: #fff;
+        }
+        
+        .nav-cta {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: #fff;
+            padding: 10px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .nav-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+        }
+        
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 120px 48px 80px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(ellipse at 20% 20%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(34, 197, 94, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+        
+        .hero-content {
+            max-width: 1200px;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            padding: 8px 16px;
+            border-radius: 100px;
+            font-size: 13px;
+            color: #60a5fa;
+            margin-bottom: 32px;
+        }
+        
+        .hero-badge::before {
+            content: "✨";
+        }
+        
+        h1 {
+            font-size: 72px;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 24px;
+            background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .hero-subtitle {
+            font-size: 20px;
+            color: #71717a;
+            max-width: 600px;
+            margin: 0 auto 48px;
+        }
+        
+        .hero-buttons {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            margin-bottom: 64px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: #fff;
+            padding: 16px 32px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: transform 0.3s, box-shadow 0.3s;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 40px rgba(59, 130, 246, 0.3);
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            padding: 16px 32px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 600;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: background 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Screenshot placeholder */
+        .hero-preview {
+            background: linear-gradient(145deg, #1a1a2e, #16213e);
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 50px 100px rgba(0, 0, 0, 0.5);
+        }
+        
+        .preview-header {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        
+        .preview-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        
+        .preview-dot.red { background: #ff5f57; }
+        .preview-dot.yellow { background: #febc2e; }
+        .preview-dot.green { background: #28c840; }
+        
+        .preview-content {
+            background: #0f0f1a;
+            border-radius: 8px;
+            padding: 20px;
+            font-family: 'Consolas', monospace;
+            font-size: 13px;
+            color: #a1a1aa;
+            text-align: left;
+        }
+        
+        .preview-line {
+            margin: 4px 0;
+        }
+        
+        .preview-line .prompt { color: #22c55e; }
+        .preview-line .command { color: #60a5fa; }
+        .preview-line .output { color: #a1a1aa; }
+        
+        /* Features Section */
+        .features {
+            padding: 120px 48px;
+            background: #0f0f0f;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .section-header {
+            text-align: center;
+            margin-bottom: 64px;
+        }
+        
+        .section-header h2 {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+        
+        .section-header p {
+            font-size: 18px;
+            color: #71717a;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+        
+        .feature-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 32px;
+            transition: transform 0.3s, border-color 0.3s;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+        
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(34, 197, 94, 0.2));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        
+        .feature-card h3 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        
+        .feature-card p {
+            color: #71717a;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+        
+        /* Setup Section */
+        .setup {
+            padding: 120px 48px;
+            background: #0a0a0a;
+        }
+        
+        .setup-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+            margin-top: 48px;
+        }
+        
+        .setup-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 40px;
+        }
+        
+        .setup-card.recommended {
+            border-color: rgba(59, 130, 246, 0.3);
+            background: linear-gradient(145deg, rgba(59, 130, 246, 0.05), transparent);
+        }
+        
+        .setup-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: #fff;
+            padding: 4px 12px;
+            border-radius: 100px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+        
+        .setup-card h3 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+        
+        .setup-card > p {
+            color: #71717a;
+            margin-bottom: 24px;
+        }
+        
+        .setup-steps {
+            list-style: none;
+        }
+        
+        .setup-steps li {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 16px;
+            color: #a1a1aa;
+        }
+        
+        .step-num {
+            width: 24px;
+            height: 24px;
+            background: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+        
+        .code-block {
+            background: #0f0f1a;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 16px;
+            font-family: 'Consolas', monospace;
+            font-size: 13px;
+            color: #a1a1aa;
+            margin-top: 12px;
+            overflow-x: auto;
+        }
+        
+        .code-block code {
+            color: #60a5fa;
+        }
+        
+        /* Download Section */
+        .download {
+            padding: 120px 48px;
+            background: linear-gradient(145deg, #0f0f1a, #0a0a0a);
+            text-align: center;
+        }
+        
+        .download-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 48px;
+            max-width: 600px;
+            margin: 48px auto 0;
+        }
+        
+        .download-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            margin: 0 auto 24px;
+        }
+        
+        .download-card h3 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .download-card .version {
+            color: #71717a;
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+        
+        .download-card .size {
+            color: #a1a1aa;
+            font-size: 13px;
+            margin-bottom: 32px;
+        }
+        
+        .download-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: #fff;
+            padding: 18px 40px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 600;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 40px rgba(59, 130, 246, 0.3);
+        }
+        
+        /* Footer */
+        footer {
+            padding: 48px;
+            text-align: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            color: #71717a;
+            font-size: 14px;
+        }
+        
+        footer a {
+            color: #60a5fa;
+            text-decoration: none;
+        }
+        
+        footer a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 { font-size: 40px; }
+            .features-grid { grid-template-columns: 1fr; }
+            .setup-options { grid-template-columns: 1fr; }
+            .hero-buttons { flex-direction: column; }
+            nav { padding: 16px 24px; }
+            .nav-links { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="logo">
+            <div class="logo-icon">✦</div>
+            Ceres AI
+        </div>
+        <div class="nav-links">
+            <a href="#features">Features</a>
+            <a href="#setup">Setup</a>
+            <a href="#download">Download</a>
+        </div>
+        <a href="#download" class="nav-cta">Get Started</a>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-bg"></div>
+        <div class="hero-content">
+            <div class="hero-badge">Version 1.0.0 Now Available</div>
+            <h1>Ceres AI Agent</h1>
+            <p class="hero-subtitle">
+                Your intelligent coding companion with file operations, terminal access, 
+                and multi-agent collaboration. Powered by Ollama.
+            </p>
+            <div class="hero-buttons">
+                <a href="#download" class="btn-primary">
+                    <span>⬇️</span> Download for Windows
+                </a>
+                <a href="#setup" class="btn-secondary">
+                    <span>📖</span> Setup Guide
+                </a>
+            </div>
+            
+            <!-- Preview -->
+            <div class="hero-preview">
+                <div class="preview-header">
+                    <div class="preview-dot red"></div>
+                    <div class="preview-dot yellow"></div>
+                    <div class="preview-dot green"></div>
+                </div>
+                <div class="preview-content">
+                    <div class="preview-line"><span class="prompt">PS C:\Project&gt;</span> <span class="command">ollama run llama3.2</span></div>
+                    <div class="preview-line output">pulling manifest...</div>
+                    <div class="preview-line output">pulling 1c8f573e75fd... 100%</div>
+                    <div class="preview-line output">Model loaded successfully! ✓</div>
+                    <div class="preview-line"></div>
+                    <div class="preview-line"><span class="output">🤖 Ceres AI Agent is ready. Ask me anything!</span></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <div class="container">
+            <div class="section-header">
+                <h2>Powerful Features</h2>
+                <p>Everything you need for AI-assisted development</p>
+            </div>
+            
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🤖</div>
+                    <h3>AI-Powered Coding</h3>
+                    <p>Chat with AI to get code suggestions, explanations, and solutions. Supports multiple AI models via Ollama.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">📁</div>
+                    <h3>File Operations</h3>
+                    <p>Read, write, create, and edit files directly. AI can modify your codebase with your approval.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">💻</div>
+                    <h3>Integrated Terminal</h3>
+                    <p>Execute commands directly in the app. White-themed terminal with PowerShell support.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🎯</div>
+                    <h3>Multi-Agent Mode</h3>
+                    <p>Run multiple AI agents simultaneously for complex tasks and collaborative problem-solving.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🔍</div>
+                    <h3>Smart Search</h3>
+                    <p>Search across all your files with regex support. Find code symbols and references instantly.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🎨</div>
+                    <h3>Modern UI</h3>
+                    <p>Beautiful dark theme with customizable interface. File explorer, chat, and terminal in one view.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Setup Section -->
+    <section class="setup" id="setup">
+        <div class="container">
+            <div class="section-header">
+                <h2>Setup Guide</h2>
+                <p>Choose your preferred AI model setup</p>
+            </div>
+            
+            <div class="setup-options">
+                <!-- Local Setup -->
+                <div class="setup-card recommended">
+                    <span class="setup-badge">RECOMMENDED</span>
+                    <h3>🏠 Local Ollama Setup</h3>
+                    <p>Run AI models locally on your machine. Fast, private, and works offline.</p>
+                    
+                    <ul class="setup-steps">
+                        <li>
+                            <span class="step-num">1</span>
+                            <div>
+                                <strong>Install Ollama</strong>
+                                <div>Download from <a href="https://ollama.com/download" target="_blank" style="color: #60a5fa;">ollama.com</a> and run the installer</div>
+                            </div>
+                        </li>
+                        <li>
+                            <span class="step-num">2</span>
+                            <div>
+                                <strong>Download a Model</strong>
+                                <div class="code-block">
+                                    <code>ollama run llama3.2</code>
+                                </div>
+                            </div>
+                        </li>
+                        <li>
+                            <span class="step-num">3</span>
+                            <div>
+                                <strong>Start Ceres AI Agent</strong>
+                                <div>Open the app - it will automatically detect Ollama models</div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+                
+                <!-- Cloud Setup -->
+                <div class="setup-card">
+                    <h3>☁️ Cloud API Setup</h3>
+                    <p>Use cloud-based AI models. No local GPU required, works on any machine.</p>
+                    
+                    <ul class="setup-steps">
+                        <li>
+                            <span class="step-num">1</span>
+                            <div>
+                                <strong>Get API Key</strong>
+                                <div>Sign up at OpenAI, Anthropic, or other providers</div>
+                            </div>
+                        </li>
+                        <li>
+                            <span class="step-num">2</span>
+                            <div>
+                                <strong>Configure API</strong>
+                                <div>Set your API key in Settings → API Configuration</div>
+                            </div>
+                        </li>
+                        <li>
+                            <span class="step-num">3</span>
+                            <div>
+                                <strong>Start Chatting</strong>
+                                <div>Select your cloud model and start using Ceres AI</div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Model List -->
+            <div style="margin-top: 64px; text-align: center;">
+                <h3 style="font-size: 24px; margin-bottom: 24px;">Supported Models</h3>
+                <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
+                    <div style="background: rgba(255,255,255,0.05); padding: 12px 24px; border-radius: 100px; font-size: 14px;">🦙 Llama 3.2</div>
+                    <div style="background: rgba(255,255,255,0.05); padding: 12px 24px; border-radius: 100px; font-size: 14px;">🦙 Llama 3.1</div>
+                    <div style="background: rgba(255,255,255,0.05); padding: 12px 24px; border-radius: 100px; font-size: 14px;">💎 DeepSeek Coder</div>
+                    <div style="background: rgba(255,255,255,0.05); padding: 12px 24px; border-radius: 100px; font-size: 14px;">🐬 Dolphin</div>
+                    <div style="background: rgba(255,255,255,0.05); padding: 12px 24px; border-radius: 100px; font-size: 14px;">⚡ Qwen 2.5</div>
+                    <div style="background: rgba(255,255,255,0.05); padding: 12px 24px; border-radius: 100px; font-size: 14px;">🔮 Mistral</div>
+                    <div style="background: rgba(255,255,255,0.05); padding: 12px 24px; border-radius: 100px; font-size: 14px;">🤖 CodeLlama</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Download Section -->
+    <section class="download" id="download">
+        <div class="container">
+            <div class="section-header">
+                <h2>Download Ceres AI Agent</h2>
+                <p>Free forever. Open source.</p>
+            </div>
+            
+            <div class="download-card">
+                <div class="download-icon">✦</div>
+                <h3>Ceres AI Agent for Windows</h3>
+                <div class="version">Version 1.0.0</div>
+                <div class="size">82 MB • Windows 10/11 (64-bit)</div>
+                <a href="https://github.com/HeliosLabAI/ceres-agent/releases" class="download-btn" target="_blank">
+                    <span>⬇️</span> Download Installer
+                </a>
+                <p style="margin-top: 24px; font-size: 13px; color: #71717a;">
+                    Version 1.0.0 • Windows 10/11 (64-bit) • 82 MB<br>
+                    <a href="https://github.com/HeliosLabAI/ceres-agent" target="_blank" style="color: #60a5fa;">View on GitHub</a> • 
+                    <a href="#setup" style="color: #60a5fa;">Setup Guide</a>
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p>© 2026 Ceres AI Agent. Open source on <a href="https://github.com/HeliosLabAI/ceres-agent" target="_blank">GitHub</a>.</p>
+        <p style="margin-top: 8px;">Made with ❤️ for developers everywhere.</p>
+    </footer>
+</body>
+</html>
