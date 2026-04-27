@@ -1565,6 +1565,23 @@ async function runAgentMessage(message, images = []) {
       return;
     }
     
+    // Handle new advanced tool operations
+    if (action === 'tool_operation') {
+      // Add to operations list
+      agentSessionState.operations.push({
+        type: details.type,
+        ...details
+      });
+      agentSessionState.fileCount++;
+      
+      // Update operations display if visible
+      if (operationsMessageId) {
+        const entry = createAgentLogEntry('operations', {});
+        if (entry) updateMessageInChat(operationsMessageId, entry);
+      }
+      return;
+    }
+    
     const entry = createAgentLogEntry(action, details);
     if (entry) {
       // For operations type, update in place instead of adding new
@@ -2947,6 +2964,21 @@ function renderOperationsSection(operations, count, id, useTyping = false) {
   const fileValidates = operations.filter(op => op.type === 'validate');
   const terminalCmds = operations.filter(op => op.type === 'terminal');
   const grepOps = operations.filter(op => op.type === 'grep');
+  
+  // NEW ADVANCED TOOLS
+  const projectAnalyses = operations.filter(op => op.type === 'analyzeProject');
+  const codeAnalyses = operations.filter(op => op.type === 'analyzeCode');
+  const depAnalyses = operations.filter(op => op.type === 'analyzeDependencies');
+  const codeGenerations = operations.filter(op => op.type === 'generateCode');
+  const componentCreates = operations.filter(op => op.type === 'createComponent');
+  const refactors = operations.filter(op => op.type === 'refactorCode');
+  const testRuns = operations.filter(op => op.type === 'runTests');
+  const depInstalls = operations.filter(op => op.type === 'installDependency');
+  const gitOps = operations.filter(op => op.type === 'gitCommand');
+  const fileCompares = operations.filter(op => op.type === 'compareFiles');
+  const docAdds = operations.filter(op => op.type === 'addDocumentation');
+  const codeOptimizes = operations.filter(op => op.type === 'optimizeCode');
+  
   console.log('DEBUG fileReads count:', fileReads.length, fileReads);
 
   // Build summary text like "Created 11 files, edited 2 files, deleted 1 file, ran 3 commands"
@@ -2962,6 +2994,20 @@ function renderOperationsSection(operations, count, id, useTyping = false) {
   if (fileValidates.length > 0) summaryParts.push(`validated ${fileValidates.length} file${fileValidates.length > 1 ? 's' : ''}`);
   if (grepOps.length > 0) summaryParts.push(`searched ${grepOps.length} time${grepOps.length > 1 ? 's' : ''}`);
   if (terminalCmds.length > 0) summaryParts.push(`ran ${terminalCmds.length} command${terminalCmds.length > 1 ? 's' : ''}`);
+  
+  // NEW ADVANCED TOOLS SUMMARY
+  if (projectAnalyses.length > 0) summaryParts.push(`analyzed ${projectAnalyses.length} project${projectAnalyses.length > 1 ? 's' : ''}`);
+  if (codeAnalyses.length > 0) summaryParts.push(`analyzed ${codeAnalyses.length} file${codeAnalyses.length > 1 ? 's' : ''}`);
+  if (depAnalyses.length > 0) summaryParts.push(`analyzed dependencies`);
+  if (codeGenerations.length > 0) summaryParts.push(`generated ${codeGenerations.length} code block${codeGenerations.length > 1 ? 's' : ''}`);
+  if (componentCreates.length > 0) summaryParts.push(`created ${componentCreates.length} component${componentCreates.length > 1 ? 's' : ''}`);
+  if (refactors.length > 0) summaryParts.push(`refactored ${refactors.length} file${refactors.length > 1 ? 's' : ''}`);
+  if (testRuns.length > 0) summaryParts.push(`ran ${testRuns.length} test suite${testRuns.length > 1 ? 's' : ''}`);
+  if (depInstalls.length > 0) summaryParts.push(`installed ${depInstalls.length} package${depInstalls.length > 1 ? 's' : ''}`);
+  if (gitOps.length > 0) summaryParts.push(`ran ${gitOps.length} git command${gitOps.length > 1 ? 's' : ''}`);
+  if (fileCompares.length > 0) summaryParts.push(`compared ${fileCompares.length} file pair${fileCompares.length > 1 ? 's' : ''}`);
+  if (docAdds.length > 0) summaryParts.push(`added docs to ${docAdds.length} file${docAdds.length > 1 ? 's' : ''}`);
+  if (codeOptimizes.length > 0) summaryParts.push(`optimized ${codeOptimizes.length} file${codeOptimizes.length > 1 ? 's' : ''}`);
   
   const summaryText = summaryParts.join(', ') || `Ran ${operations.length} operation${operations.length > 1 ? 's' : ''}`;
   const opsId = `ops-${id}-${Math.random().toString(36).substr(2, 9)}`;
@@ -3109,6 +3155,153 @@ function renderOperationsSection(operations, count, id, useTyping = false) {
       <div style="padding: 1px 0; display: flex; align-items: center; gap: 4px; line-height: 1.3;">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
         <span style="color: #374151; font-family: monospace; font-size: 12px;">Searched "${escapeHtml(op.query || '')}" (${op.count || 0} matches)</span>
+      </div>`;
+  });
+
+  // NEW ADVANCED TOOLS UI
+  
+  // Project Analysis
+  projectAnalyses.forEach(op => {
+    fileListHtml += `
+      <div style="padding: 6px 0; border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; gap: 8px; line-height: 1.3;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="1.5"><path d="M3 3h18v18H3z"/><path d="M3 9h18M9 21V9"/></svg>
+        <div style="display: flex; flex-direction: column; gap: 2px;">
+          <span style="color: #111827; font-size: 12px; font-weight: 500;">Analyzed Project</span>
+          <span style="color: #6b7280; font-size: 11px;">${escapeHtml(op.summary || 'Tech stack detected')}</span>
+        </div>
+      </div>`;
+  });
+  
+  // Code Analysis
+  codeAnalyses.forEach(op => {
+    fileListHtml += `
+      <div style="padding: 6px 0; border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; gap: 8px; line-height: 1.3;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="1.5"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        <div style="display: flex; flex-direction: column; gap: 2px; flex: 1;">
+          <span style="color: #111827; font-size: 12px; font-weight: 500;">Analyzed ${escapeHtml(op.fileName || 'Code')}</span>
+          <span style="color: #6b7280; font-size: 11px;">Complexity: ${op.complexity || 'low'} • Functions: ${op.functionCount || 0} • Imports: ${op.importCount || 0}</span>
+        </div>
+      </div>`;
+  });
+  
+  // Dependency Analysis
+  depAnalyses.forEach(op => {
+    fileListHtml += `
+      <div style="padding: 6px 0; border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; gap: 8px; line-height: 1.3;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ec4899" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        <div style="display: flex; flex-direction: column; gap: 2px; flex: 1;">
+          <span style="color: #111827; font-size: 12px; font-weight: 500;">Analyzed Dependencies</span>
+          <span style="color: #6b7280; font-size: 11px;">${op.depCount || 0} deps • ${op.unusedCount || 0} unused • ${op.importCount || 0} imports</span>
+        </div>
+      </div>`;
+  });
+  
+  // Code Generation
+  codeGenerations.forEach(op => {
+    fileListHtml += `
+      <div style="padding: 6px 0; border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; gap: 8px; line-height: 1.3;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="1.5"><path d="M12 2a10 10 0 1 0 10 10H12V2z"/><path d="M12 2 2 12"/><path d="M21.17 8H12V2.83"/></svg>
+        <div style="display: flex; flex-direction: column; gap: 2px; flex: 1;">
+          <span style="color: #111827; font-size: 12px; font-weight: 500;">Generated ${escapeHtml(op.codeType || 'Code')}</span>
+          <span style="color: #6b7280; font-size: 11px;">${op.lineCount || 0} lines • ${escapeHtml(op.framework || '')}</span>
+        </div>
+      </div>`;
+  });
+  
+  // Component Creation
+  componentCreates.forEach(op => {
+    fileListHtml += `
+      <div style="padding: 6px 0; border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; gap: 8px; line-height: 1.3;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+        <div style="display: flex; flex-direction: column; gap: 2px; flex: 1;">
+          <span style="color: #111827; font-size: 12px; font-weight: 500;">Created Component ${escapeHtml(op.componentName || '')}</span>
+          <span style="color: #6b7280; font-size: 11px;">${op.props?.length || 0} props • ${escapeHtml(op.framework || 'React')}</span>
+        </div>
+      </div>`;
+  });
+  
+  // Refactoring
+  refactors.forEach(op => {
+    fileListHtml += `
+      <div style="padding: 6px 0; border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; gap: 8px; line-height: 1.3;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="1.5"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 0 0 4.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 0 1-15.357-2m15.357 2H15"/></svg>
+        <div style="display: flex; flex-direction: column; gap: 2px; flex: 1;">
+          <span style="color: #111827; font-size: 12px; font-weight: 500;">Refactored ${escapeHtml(op.fileName || 'Code')}</span>
+          <span style="color: #6b7280; font-size: 11px;">${escapeHtml(op.operation || 'Restructure')} • ${op.changes?.length || 0} changes</span>
+        </div>
+      </div>`;
+  });
+  
+  // Test Runs
+  testRuns.forEach(op => {
+    const statusColor = op.passed ? '#22c55e' : '#ef4444';
+    fileListHtml += `
+      <div style="padding: 6px 0; border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; gap: 8px; line-height: 1.3;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${statusColor}" stroke-width="1.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        <div style="display: flex; flex-direction: column; gap: 2px; flex: 1;">
+          <span style="color: #111827; font-size: 12px; font-weight: 500;">Ran Tests ${op.passed ? '✓' : '✗'}</span>
+          <span style="color: #6b7280; font-size: 11px;">${op.passedCount || 0} passed • ${op.failedCount || 0} failed • ${op.duration || 0}s</span>
+        </div>
+      </div>`;
+  });
+  
+  // Dependency Install
+  depInstalls.forEach(op => {
+    fileListHtml += `
+      <div style="padding: 6px 0; border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; gap: 8px; line-height: 1.3;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="1.5"><path d="M12 2v20M2 12h20"/><path d="M2 7l5-5 5 5M17 7l5 5-5 5"/></svg>
+        <div style="display: flex; flex-direction: column; gap: 2px; flex: 1;">
+          <span style="color: #111827; font-size: 12px; font-weight: 500;">Installed Packages</span>
+          <span style="color: #6b7280; font-size: 11px;">${escapeHtml(op.packages?.join(', ') || '')} ${op.dev ? '(dev)' : ''}</span>
+        </div>
+      </div>`;
+  });
+  
+  // Git Operations
+  gitOps.forEach(op => {
+    fileListHtml += `
+      <div style="padding: 6px 0; border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; gap: 8px; line-height: 1.3;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="1.5"><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5 5"/><path d="M12 2v20"/><path d="M2 12h20"/></svg>
+        <div style="display: flex; flex-direction: column; gap: 2px; flex: 1;">
+          <span style="color: #111827; font-size: 12px; font-weight: 500;">Git ${escapeHtml(op.command || 'Command')}</span>
+          <span style="color: #6b7280; font-size: 11px;">${op.success ? 'Success' : 'Failed'} • ${escapeHtml(op.message || '')}</span>
+        </div>
+      </div>`;
+  });
+  
+  // File Compare
+  fileCompares.forEach(op => {
+    fileListHtml += `
+      <div style="padding: 6px 0; border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; gap: 8px; line-height: 1.3;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="1.5"><path d="M9 12h6M9 16h6M9 8h6M3 6h18M3 12h18M3 18h18"/></svg>
+        <div style="display: flex; flex-direction: column; gap: 2px; flex: 1;">
+          <span style="color: #111827; font-size: 12px; font-weight: 500;">Compared Files</span>
+          <span style="color: #6b7280; font-size: 11px;">${op.differences || 0} differences • ${escapeHtml(op.file1 || '')} vs ${escapeHtml(op.file2 || '')}</span>
+        </div>
+      </div>`;
+  });
+  
+  // Documentation
+  docAdds.forEach(op => {
+    fileListHtml += `
+      <div style="padding: 6px 0; border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; gap: 8px; line-height: 1.3;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#14b8a6" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        <div style="display: flex; flex-direction: column; gap: 2px; flex: 1;">
+          <span style="color: #111827; font-size: 12px; font-weight: 500;">Added ${escapeHtml(op.docType || 'JSDoc')}</span>
+          <span style="color: #6b7280; font-size: 11px;">${op.linesAdded || 0} lines added to ${escapeHtml(op.fileName || '')}</span>
+        </div>
+      </div>`;
+  });
+  
+  // Code Optimization
+  codeOptimizes.forEach(op => {
+    fileListHtml += `
+      <div style="padding: 6px 0; border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; gap: 8px; line-height: 1.3;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#84cc16" stroke-width="1.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        <div style="display: flex; flex-direction: column; gap: 2px; flex: 1;">
+          <span style="color: #111827; font-size: 12px; font-weight: 500;">Optimized ${escapeHtml(op.fileName || 'Code')}</span>
+          <span style="color: #6b7280; font-size: 11px;">${op.optimizations?.length || 0} optimizations • Target: ${escapeHtml(op.target || 'performance')}</span>
+        </div>
       </div>`;
   });
 

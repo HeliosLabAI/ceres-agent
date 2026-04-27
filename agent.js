@@ -1952,13 +1952,23 @@ class ToolExecutor {
     if (techStack.hasVite) techStack.buildTool = 'Vite';
     else if (techStack.hasWebpack) techStack.buildTool = 'Webpack';
     
-    return {
+    const result = {
       totalFiles: allFiles.length,
       directories: files.filter(f => f.isDirectory).map(f => f.name),
       techStack,
       entryPoints: this.detectEntryPoints(allFiles, techStack),
       summary: this.generateProjectSummary(techStack, allFiles.length)
     };
+    
+    // Emit to UI
+    this.emitToUI("tool_operation", {
+      type: "analyzeProject",
+      summary: result.summary,
+      techStack: result.techStack,
+      timestamp: Date.now()
+    });
+    
+    return result;
   }
 
   async collectAllFiles(tree, allFiles = []) {
@@ -2029,6 +2039,16 @@ class ToolExecutor {
       classes: this.extractClasses(content),
       issues: this.detectIssues(content, focus)
     };
+    
+    // Emit to UI
+    this.emitToUI("tool_operation", {
+      type: "analyzeCode",
+      fileName: normalizedPath.split('/').pop(),
+      complexity: analysis.complexity.level,
+      functionCount: analysis.functions.length,
+      importCount: analysis.imports.length,
+      timestamp: Date.now()
+    });
     
     return analysis;
   }
@@ -2197,6 +2217,15 @@ class ToolExecutor {
     
     analysis.summary = `Found ${analysis.imports.length} files with imports, ${allImports.size} unique imports, ${analysis.unused.length} potentially unused dependencies`;
     
+    // Emit to UI
+    this.emitToUI("tool_operation", {
+      type: "analyzeDependencies",
+      depCount: analysis.npm?.all?.length || 0,
+      unusedCount: analysis.unused.length,
+      importCount: allImports.size,
+      timestamp: Date.now()
+    });
+    
     return analysis;
   }
 
@@ -2212,7 +2241,18 @@ class ToolExecutor {
     };
     
     const generator = templates[type] || this.generateGenericCode;
-    return generator.call(this, specs, framework);
+    const result = generator.call(this, specs, framework);
+    
+    // Emit to UI
+    this.emitToUI("tool_operation", {
+      type: "generateCode",
+      codeType: type,
+      lineCount: result.code?.split('\n').length || 0,
+      framework,
+      timestamp: Date.now()
+    });
+    
+    return result;
   }
 
   generateComponentCode(specs, framework) {
@@ -2398,12 +2438,23 @@ describe('${component}', () => {
     const specs = { name, type, props, hasState: type.includes('state'), hasEffects: type.includes('effect') };
     const generated = this.generateComponentCode(specs, framework);
     
-    return {
+    const result = {
       name,
       content: generated.code,
       extension: generated.language === 'tsx' ? '.tsx' : '.jsx',
       specs
     };
+    
+    // Emit to UI
+    this.emitToUI("tool_operation", {
+      type: "createComponent",
+      componentName: name,
+      props: props,
+      framework,
+      timestamp: Date.now()
+    });
+    
+    return result;
   }
 
   // Smart refactoring
@@ -2430,6 +2481,15 @@ describe('${component}', () => {
       default:
         result = { success: false, error: `Unknown operation: ${operation}` };
     }
+    
+    // Emit to UI
+    this.emitToUI("tool_operation", {
+      type: "refactorCode",
+      fileName: normalizedPath.split('/').pop(),
+      operation,
+      changes: result.changes?.length || 0,
+      timestamp: Date.now()
+    });
     
     return result;
   }
@@ -2517,11 +2577,23 @@ describe('${component}', () => {
       ? `npm test -- --coverage${pattern ? ` --testPathPattern="${pattern}"` : ''}`
       : `npm test${pattern ? ` -- --testPathPattern="${pattern}"` : ''}`;
     
-    return await this.executeTerminal({
+    const result = await this.executeTerminal({
       command,
       reason: 'Running test suite',
       cwd: this.workingDirectoryPath
     });
+    
+    // Emit to UI
+    this.emitToUI("tool_operation", {
+      type: "runTests",
+      passed: result.success,
+      passedCount: result.success ? 1 : 0,
+      failedCount: result.success ? 0 : 1,
+      duration: 0,
+      timestamp: Date.now()
+    });
+    
+    return result;
   }
 
   // Install dependencies
@@ -2534,11 +2606,21 @@ describe('${component}', () => {
       ? `yarn add ${packages.join(' ')}${dev ? ' --dev' : ''}`
       : `npm install ${packages.join(' ')}${dev ? ' --save-dev' : ''}`;
     
-    return await this.executeTerminal({
+    const result = await this.executeTerminal({
       command: cmd,
       reason: `Installing ${packages.join(', ')}${dev ? ' (dev dependencies)' : ''}`,
       cwd: this.workingDirectoryPath
     });
+    
+    // Emit to UI
+    this.emitToUI("tool_operation", {
+      type: "installDependency",
+      packages,
+      dev,
+      timestamp: Date.now()
+    });
+    
+    return result;
   }
 
   // Git operations
@@ -2564,11 +2646,22 @@ describe('${component}', () => {
     
     const fullCommand = gitCommands[command] || `git ${command} ${args.join(' ')}`;
     
-    return await this.executeTerminal({
+    const result = await this.executeTerminal({
       command: fullCommand,
       reason: `Git ${command} operation`,
       cwd: this.workingDirectoryPath
     });
+    
+    // Emit to UI
+    this.emitToUI("tool_operation", {
+      type: "gitCommand",
+      command,
+      success: result.success,
+      message: result.stdout?.substring(0, 50) || '',
+      timestamp: Date.now()
+    });
+    
+    return result;
   }
 
   // Compare two files
@@ -2597,12 +2690,23 @@ describe('${component}', () => {
       }
     }
     
-    return {
+    const result = {
       file1: { path: file1, lines: lines1.length },
       file2: { path: file2, lines: lines2.length },
       differences: diff.length,
       diff
     };
+    
+    // Emit to UI
+    this.emitToUI("tool_operation", {
+      type: "compareFiles",
+      file1: file1.split('/').pop(),
+      file2: file2.split('/').pop(),
+      differences: diff.length,
+      timestamp: Date.now()
+    });
+    
+    return result;
   }
 
   // Extract function from code
@@ -2635,13 +2739,27 @@ describe('${component}', () => {
       documented = `# ${projectName}\n\n## Description\n\nAdd project description here.\n\n## Installation\n\n\`\`\`bash\nnpm install\n\`\`\`\n\n## Usage\n\n\`\`\`bash\nnpm start\n\`\`\`\n\n## Features\n\n- Feature 1\n- Feature 2\n- Feature 3\n\n## Contributing\n\nContributions welcome!\n`;
     }
     
-    return {
+    const result = {
       path: normalizedPath,
       type,
       originalLength: content.length,
       newLength: documented.length,
+      linesAdded: documented.length - content.length,
+      fileName: normalizedPath.split('/').pop(),
+      docType: type,
       content: documented
     };
+    
+    // Emit to UI
+    this.emitToUI("tool_operation", {
+      type: "addDocumentation",
+      fileName: normalizedPath.split('/').pop(),
+      docType: type,
+      linesAdded: result.linesAdded,
+      timestamp: Date.now()
+    });
+    
+    return result;
   }
 
   // Optimize code
@@ -2674,7 +2792,7 @@ describe('${component}', () => {
       }
     }
     
-    return {
+    const result = {
       path: normalizedPath,
       target,
       optimizations,
@@ -2683,6 +2801,17 @@ describe('${component}', () => {
       content: optimized,
       applied: optimizations.length > 0
     };
+    
+    // Emit to UI
+    this.emitToUI("tool_operation", {
+      type: "optimizeCode",
+      fileName: normalizedPath.split('/').pop(),
+      target,
+      optimizations: optimizations,
+      timestamp: Date.now()
+    });
+    
+    return result;
   }
 }
 
