@@ -165,11 +165,31 @@ Available tools (USE ANY BASED ON LOGIC):
 - executeTerminal({ command, reason, cwd? }) - Run terminal commands (requires approval, only works in Electron mode)
 
 DECISION EXAMPLES:
-- "Create a website" → First: readFile/getFileTree to understand structure, THEN: createFile/writeFile to build it
-- "Fix bug in app.js" → First: readFile to see code, searchFiles to find related code, THEN: applyPatch OR editFile to fix
+- "Create a website" → analyzeProject → generateCode/templates → createFile/writeFiles → runTests
+- "Fix bug in app.js" → readFile → searchFiles/grepSearch → analyzeDependencies → applyPatch/editFile → validateSyntax → runTests
 - "Add a dot at line 1323" → Use editFile with oldText="text" newText="text." for precise single-character edits
-- "Run the project" → First: readFile to check package.json, THEN: executeTerminal to run it
-- "Search for API calls" → Use grepSearch to find all API calls, THEN: readFiles to analyze them
+- "Run the project" → readFile to check package.json → installDependency if needed → executeTerminal
+- "Search for API calls" → grepSearch with pattern → readFiles → findReferences → analyzeDependencies
+- "Refactor code" → getSymbols → findReferences → refactorCode → applyPatch → validateSyntax
+- "Create React component" → analyzeProject → createComponent with template → installDependency → writeFile
+- "Git operations" → gitCommand for commit/push/branch management
+- "Compare implementations" → compareFiles to see differences
+- "Optimize performance" → analyzeCode → optimizeCode → applyPatch
+
+NEW ADVANCED TOOLS:
+- analyzeProject({}) - Deep project structure analysis with tech stack detection
+- analyzeCode({ path, focus? }) - Analyze code quality, complexity, patterns
+- analyzeDependencies({}) - Analyze package.json, imports, dependency tree
+- generateCode({ type, specs, framework? }) - AI generate code from specs
+- createComponent({ name, type, props?, framework? }) - Scaffold components
+- refactorCode({ path, operation, target }) - Smart refactoring (extract, rename, organize)
+- runTests({ pattern?, coverage? }) - Run test suite with coverage
+- installDependency({ packages, dev?, manager? }) - Install npm/yarn packages
+- gitCommand({ command, args? }) - Execute git commands
+- compareFiles({ file1, file2 }) - Show diff between files
+- extractFunction({ path, startLine, endLine, name }) - Extract code to function
+- addDocumentation({ path, type }) - Generate JSDoc/README docs
+- optimizeCode({ path, target }) - Optimize for performance/readability
 
 CRITICAL RULES - MUST FOLLOW:
 - YOU decide the tool sequence based on logic and task requirements
@@ -694,17 +714,20 @@ class ToolExecutor {
     this.writeDebounceMs = 100; // Debounce writes by 100ms
     
     this.tools = {
+      // Core file operations
       readFile: this.readFileWithCache.bind(this),
-      readFiles: this.readFilesBatch.bind(this), // Batch read
+      readFiles: this.readFilesBatch.bind(this),
       writeFile: this.writeFileWithBatch.bind(this),
-      writeFiles: this.writeFilesBatch.bind(this), // Batch write
-      editFile: this.editFile.bind(this), // Precise text replacement
-      applyPatch: this.applyPatchWithRetry.bind(this), // Retry logic
-      clearFileCache: this.clearFileCache.bind(this), // Manual cache clear
+      writeFiles: this.writeFilesBatch.bind(this),
+      editFile: this.editFile.bind(this),
+      applyPatch: this.applyPatchWithRetry.bind(this),
+      clearFileCache: this.clearFileCache.bind(this),
       createFile: this.createFile.bind(this),
       deleteFile: this.deleteFile.bind(this),
       moveFile: this.moveFile.bind(this),
       copyFile: this.copyFile.bind(this),
+      
+      // Exploration & analysis
       getFileInfo: this.getFileInfo.bind(this),
       searchFiles: this.searchFiles.bind(this),
       grepSearch: this.grepSearch.bind(this),
@@ -712,9 +735,26 @@ class ToolExecutor {
       getFileTree: this.getFileTree.bind(this),
       getSymbols: this.getSymbols.bind(this),
       findReferences: this.findReferences.bind(this),
+      
+      // Validation & testing
       validateSyntax: this.validateSyntax.bind(this),
       askUser: this.askUser.bind(this),
-      executeTerminal: this.executeTerminal.bind(this)
+      executeTerminal: this.executeTerminal.bind(this),
+      
+      // NEW ADVANCED TOOLS
+      analyzeProject: this.analyzeProject.bind(this),
+      analyzeCode: this.analyzeCode.bind(this),
+      analyzeDependencies: this.analyzeDependencies.bind(this),
+      generateCode: this.generateCode.bind(this),
+      createComponent: this.createComponent.bind(this),
+      refactorCode: this.refactorCode.bind(this),
+      runTests: this.runTests.bind(this),
+      installDependency: this.installDependency.bind(this),
+      gitCommand: this.gitCommand.bind(this),
+      compareFiles: this.compareFiles.bind(this),
+      extractFunction: this.extractFunction.bind(this),
+      addDocumentation: this.addDocumentation.bind(this),
+      optimizeCode: this.optimizeCode.bind(this)
     };
   }
 
@@ -1835,6 +1875,814 @@ class ToolExecutor {
     }
 
     return currentDir;
+  }
+
+  // ==================== NEW ADVANCED TOOLS ====================
+
+  // Analyze entire project structure and detect tech stack
+  async analyzeProject() {
+    this.ensureWorkingDirectory();
+    
+    const tree = await this.getFileTree({ path: "", depth: 3 });
+    const files = tree.entries || [];
+    
+    // Detect tech stack
+    const techStack = {
+      framework: null,
+      language: null,
+      buildTool: null,
+      testFramework: null,
+      hasPackageJson: false,
+      hasTsConfig: false,
+      hasWebpack: false,
+      hasVite: false,
+      hasNextJs: false,
+      hasReact: false,
+      hasVue: false,
+      hasAngular: false,
+      hasNode: false,
+      hasPython: false,
+      hasGo: false,
+      hasRust: false
+    };
+    
+    const fileNames = files.map(f => f.name.toLowerCase());
+    const allFiles = await this.collectAllFiles(tree);
+    
+    // Check for config files
+    if (fileNames.includes('package.json')) {
+      techStack.hasPackageJson = true;
+      techStack.hasNode = true;
+      try {
+        const pkg = await this.readFile({ path: 'package.json' });
+        const pkgContent = JSON.parse(pkg.content);
+        const deps = { ...pkgContent.dependencies, ...pkgContent.devDependencies };
+        
+        if (deps.react || deps.next) techStack.hasReact = true;
+        if (deps.next) techStack.hasNextJs = true;
+        if (deps.vue) techStack.hasVue = true;
+        if (deps['@angular/core']) techStack.hasAngular = true;
+        if (deps.webpack) techStack.hasWebpack = true;
+        if (deps.vite) techStack.hasVite = true;
+        if (deps.jest || deps.vitest || deps.mocha) techStack.testFramework = true;
+      } catch (e) {}
+    }
+    
+    if (fileNames.includes('tsconfig.json')) techStack.hasTsConfig = true;
+    if (fileNames.includes('vite.config.js') || fileNames.includes('vite.config.ts')) techStack.hasVite = true;
+    if (fileNames.includes('webpack.config.js')) techStack.hasWebpack = true;
+    if (fileNames.includes('next.config.js') || fileNames.includes('next.config.mjs')) techStack.hasNextJs = true;
+    
+    // Detect by file extensions
+    const extensions = new Set(allFiles.map(f => this.getExtension(f.name)));
+    if (extensions.has('.tsx') || extensions.has('.ts')) techStack.language = 'TypeScript';
+    else if (extensions.has('.jsx') || extensions.has('.js')) techStack.language = 'JavaScript';
+    
+    if (extensions.has('.py')) { techStack.hasPython = true; techStack.language = techStack.language || 'Python'; }
+    if (extensions.has('.go')) { techStack.hasGo = true; techStack.language = techStack.language || 'Go'; }
+    if (extensions.has('.rs')) { techStack.hasRust = true; techStack.language = techStack.language || 'Rust'; }
+    
+    // Determine main framework
+    if (techStack.hasNextJs) techStack.framework = 'Next.js';
+    else if (techStack.hasReact) techStack.framework = 'React';
+    else if (techStack.hasVue) techStack.framework = 'Vue';
+    else if (techStack.hasAngular) techStack.framework = 'Angular';
+    
+    // Determine build tool
+    if (techStack.hasVite) techStack.buildTool = 'Vite';
+    else if (techStack.hasWebpack) techStack.buildTool = 'Webpack';
+    
+    return {
+      totalFiles: allFiles.length,
+      directories: files.filter(f => f.isDirectory).map(f => f.name),
+      techStack,
+      entryPoints: this.detectEntryPoints(allFiles, techStack),
+      summary: this.generateProjectSummary(techStack, allFiles.length)
+    };
+  }
+
+  async collectAllFiles(tree, allFiles = []) {
+    if (!tree.entries) return allFiles;
+    
+    for (const entry of tree.entries) {
+      if (!entry.isDirectory) {
+        allFiles.push(entry);
+      } else if (!this.ignoredDirectories.has(entry.name)) {
+        try {
+          const subTree = await this.getFileTree({ path: entry.path, depth: 1 });
+          await this.collectAllFiles(subTree, allFiles);
+        } catch (e) {}
+      }
+    }
+    return allFiles;
+  }
+
+  detectEntryPoints(files, techStack) {
+    const entries = [];
+    const fileNames = files.map(f => f.name);
+    
+    if (techStack.hasPackageJson) {
+      if (fileNames.includes('index.js') || fileNames.includes('index.ts')) entries.push('index.js/index.ts');
+      if (fileNames.includes('main.js') || fileNames.includes('main.ts')) entries.push('main.js/main.ts');
+      if (fileNames.includes('app.js') || fileNames.includes('app.ts')) entries.push('app.js/app.ts');
+      if (fileNames.includes('server.js') || fileNames.includes('server.ts')) entries.push('server.js/server.ts');
+    }
+    
+    if (fileNames.includes('src')) entries.push('src/');
+    if (fileNames.includes('pages') && techStack.hasNextJs) entries.push('pages/');
+    if (fileNames.includes('app') && techStack.hasNextJs) entries.push('app/');
+    
+    return entries;
+  }
+
+  generateProjectSummary(techStack, fileCount) {
+    const parts = [];
+    if (techStack.framework) parts.push(techStack.framework);
+    if (techStack.language) parts.push(techStack.language);
+    if (techStack.buildTool) parts.push(`with ${techStack.buildTool}`);
+    
+    return parts.length > 0 
+      ? `${parts.join(' ')} project with ${fileCount} files`
+      : `Project with ${fileCount} files`;
+  }
+
+  // Deep code analysis - complexity, patterns, quality
+  async analyzeCode({ path, focus = 'general' }) {
+    const normalizedPath = this.normalizePath(path);
+    const file = await this.readFile({ path: normalizedPath });
+    const content = file.content;
+    const lines = content.split('\n');
+    
+    const analysis = {
+      path: normalizedPath,
+      metrics: {
+        totalLines: lines.length,
+        codeLines: lines.filter(l => l.trim() && !l.trim().startsWith('//')).length,
+        commentLines: lines.filter(l => l.trim().startsWith('//') || l.includes('/*')).length,
+        blankLines: lines.filter(l => !l.trim()).length,
+        avgLineLength: Math.round(lines.reduce((sum, l) => sum + l.length, 0) / lines.length)
+      },
+      complexity: this.calculateComplexity(content),
+      functions: this.extractFunctions(content),
+      imports: this.extractImports(content),
+      exports: this.extractExports(content),
+      classes: this.extractClasses(content),
+      issues: this.detectIssues(content, focus)
+    };
+    
+    return analysis;
+  }
+
+  calculateComplexity(content) {
+    let score = 0;
+    const patterns = [
+      { pattern: /\bif\b/g, weight: 1 },
+      { pattern: /\belse\s+if\b/g, weight: 2 },
+      { pattern: /\bfor\b|\bwhile\b|\bdo\b/g, weight: 3 },
+      { pattern: /\bswitch\b/g, weight: 2 },
+      { pattern: /\bcase\b/g, weight: 1 },
+      { pattern: /\btry\b/g, weight: 1 },
+      { pattern: /\bcatch\b/g, weight: 1 },
+      { pattern: /\?\s*:/g, weight: 1 }, // ternary
+      { pattern: /&&|\|\|/g, weight: 1 }, // logical operators
+    ];
+    
+    for (const { pattern, weight } of patterns) {
+      const matches = content.match(pattern);
+      if (matches) score += matches.length * weight;
+    }
+    
+    let level = 'low';
+    if (score > 20) level = 'high';
+    else if (score > 10) level = 'medium';
+    
+    return { score, level };
+  }
+
+  extractFunctions(content) {
+    const functions = [];
+    const patterns = [
+      /(?:async\s+)?function\s+(\w+)\s*\(/g,
+      /(?:async\s+)?(?:const|let|var)\s+(\w+)\s*=\s*(?:async\s*)?(?:\([^)]*\)|\w+)\s*=>/g,
+      /(\w+)\s*:\s*(?:async\s*)?(?:\([^)]*\)|\w+)\s*=>/g,
+      /(?:public|private|protected)?\s*(?:async\s+)?(\w+)\s*\([^)]*\)\s*\{/g,
+    ];
+    
+    for (const pattern of patterns) {
+      let match;
+      while ((match = pattern.exec(content)) !== null) {
+        functions.push(match[1]);
+      }
+    }
+    
+    return [...new Set(functions)];
+  }
+
+  extractImports(content) {
+    const imports = [];
+    const patterns = [
+      /import\s+(?:\{[^}]+\}|\w+)\s+from\s+['"]([^'"]+)['"]/g,
+      /import\s+['"]([^'"]+)['"]/g,
+      /const\s+\w+\s+=\s+require\(['"]([^'"]+)['"]\)/g,
+      /from\s+['"]([^'"]+)['"]/g,
+    ];
+    
+    for (const pattern of patterns) {
+      let match;
+      while ((match = pattern.exec(content)) !== null) {
+        imports.push(match[1]);
+      }
+    }
+    
+    return [...new Set(imports)];
+  }
+
+  extractExports(content) {
+    const exports = [];
+    const patterns = [
+      /export\s+(?:default\s+)?(?:const|let|var|function|class|interface|type)?\s*(\w+)/g,
+      /export\s*\{([^}]+)\}/g,
+      /module\.exports\s*=\s*(\w+)/g,
+      /exports\.(\w+)\s*=/g,
+    ];
+    
+    for (const pattern of patterns) {
+      let match;
+      while ((match = pattern.exec(content)) !== null) {
+        exports.push(match[1]);
+      }
+    }
+    
+    return [...new Set(exports)];
+  }
+
+  extractClasses(content) {
+    const classes = [];
+    const pattern = /class\s+(\w+)(?:\s+extends\s+(\w+))?/g;
+    let match;
+    while ((match = pattern.exec(content)) !== null) {
+      classes.push({ name: match[1], extends: match[2] || null });
+    }
+    return classes;
+  }
+
+  detectIssues(content, focus) {
+    const issues = [];
+    
+    if (focus === 'security' || focus === 'general') {
+      if (content.includes('eval(')) issues.push({ type: 'security', message: 'Uses eval() - potential security risk' });
+      if (content.includes('innerHTML') && !content.includes('sanitize')) issues.push({ type: 'security', message: 'Uses innerHTML without sanitization' });
+      if (/password\s*=\s*['"][^'"]+['"]/i.test(content)) issues.push({ type: 'security', message: 'Hardcoded password detected' });
+    }
+    
+    if (focus === 'performance' || focus === 'general') {
+      const consoleLogs = (content.match(/console\.log/g) || []).length;
+      if (consoleLogs > 5) issues.push({ type: 'performance', message: `${consoleLogs} console.log statements - remove for production` });
+    }
+    
+    if (focus === 'quality' || focus === 'general') {
+      if (content.includes('TODO')) issues.push({ type: 'quality', message: 'TODO comments found' });
+      if (content.includes('FIXME')) issues.push({ type: 'quality', message: 'FIXME comments found' });
+      if (content.includes('// HACK')) issues.push({ type: 'quality', message: 'HACK comment found' });
+    }
+    
+    return issues;
+  }
+
+  // Analyze dependencies and imports
+  async analyzeDependencies() {
+    this.ensureWorkingDirectory();
+    
+    const analysis = {
+      npm: null,
+      imports: [],
+      circular: [],
+      unused: [],
+      outdated: [],
+      summary: ''
+    };
+    
+    // Check package.json
+    try {
+      const pkg = await this.readFile({ path: 'package.json' });
+      const pkgContent = JSON.parse(pkg.content);
+      analysis.npm = {
+        dependencies: Object.keys(pkgContent.dependencies || {}),
+        devDependencies: Object.keys(pkgContent.devDependencies || {}),
+        all: [...Object.keys(pkgContent.dependencies || {}), ...Object.keys(pkgContent.devDependencies || {})]
+      };
+    } catch (e) {}
+    
+    // Search for all imports
+    const allFiles = await this.collectAllFiles(await this.getFileTree({ path: '', depth: 10 }));
+    const codeFiles = allFiles.filter(f => ['.js', '.ts', '.jsx', '.tsx', '.vue'].includes(this.getExtension(f.name)));
+    
+    const allImports = new Set();
+    for (const file of codeFiles.slice(0, 50)) { // Limit to prevent timeout
+      try {
+        const content = (await this.readFile({ path: file.path })).content;
+        const imports = this.extractImports(content);
+        imports.forEach(i => allImports.add(i));
+        analysis.imports.push({ file: file.path, imports });
+      } catch (e) {}
+    }
+    
+    // Find potentially unused dependencies
+    if (analysis.npm) {
+      analysis.unused = analysis.npm.all.filter(dep => {
+        const importName = dep.replace(/^@[^/]+\//, '').replace(/-.*/, '');
+        return ![...allImports].some(imp => imp.includes(importName) || imp === dep);
+      });
+    }
+    
+    analysis.summary = `Found ${analysis.imports.length} files with imports, ${allImports.size} unique imports, ${analysis.unused.length} potentially unused dependencies`;
+    
+    return analysis;
+  }
+
+  // Generate code from specifications
+  async generateCode({ type, specs, framework = 'react' }) {
+    const templates = {
+      'component': this.generateComponentCode,
+      'api': this.generateApiCode,
+      'hook': this.generateHookCode,
+      'utility': this.generateUtilityCode,
+      'test': this.generateTestCode,
+      'styles': this.generateStylesCode
+    };
+    
+    const generator = templates[type] || this.generateGenericCode;
+    return generator.call(this, specs, framework);
+  }
+
+  generateComponentCode(specs, framework) {
+    const { name, props = [], hasState = false, hasEffects = false } = specs;
+    const propTypes = props.map(p => `${p.name}${p.required ? '' : '?'}: ${p.type}`).join(', ');
+    
+    if (framework === 'react') {
+      return {
+        code: `import React${hasState || hasEffects ? ', { useState, useEffect }' : ''} from 'react';
+${props.some(p => p.type === 'function') ? "import PropTypes from 'prop-types';" : ''}
+
+interface ${name}Props {
+  ${props.map(p => `  ${p.name}${p.required ? '' : '?'}: ${p.type};`).join('\n')}
+}
+
+export const ${name}: React.FC<${name}Props> = ({ ${props.map(p => p.name).join(', ')} }) => {
+  ${hasState ? `const [state, setState] = useState(null);` : ''}
+  
+  ${hasEffects ? `useEffect(() => {
+    // Effect logic here
+  }, []);` : ''}
+  
+  return (
+    <div className="${name.toLowerCase()}">
+      {/* Component content */}
+    </div>
+  );
+};
+
+export default ${name};`,
+        language: 'tsx'
+      };
+    }
+    
+    return { code: '// Code generation for this framework not yet implemented', language: 'txt' };
+  }
+
+  generateApiCode(specs) {
+    const { method = 'GET', endpoint, hasAuth = false, hasValidation = false } = specs;
+    return {
+      code: `import { NextApiRequest, NextApiResponse } from 'next';
+${hasAuth ? "import { verifyToken } from '@/lib/auth';" : ''}
+${hasValidation ? "import { z } from 'zod';" : ''}
+
+${hasValidation ? `const schema = z.object({
+  // Add validation schema
+});` : ''}
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  ${hasAuth ? 'const user = await verifyToken(req);\n  if (!user) return res.status(401).json({ error: "Unauthorized" });' : ''}
+  
+  if (req.method !== '${method}') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  try {
+    ${hasValidation ? 'const data = schema.parse(req.body);' : ''}
+    
+    // Handler logic here
+    
+    return res.status(200).json({ success: true });
+  } catch (error) {
+    console.error('API Error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+}`,
+      language: 'ts'
+    };
+  }
+
+  generateHookCode(specs) {
+    const { name, dependencies = [] } = specs;
+    return {
+      code: `import { useState, useEffect, useCallback } from 'react';
+
+export function ${name}() {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      // Fetch logic here
+      setData(result);
+    } catch (err) {
+      setError(err);
+    } finally {
+      setLoading(false);
+    }
+  }, [${dependencies.join(', ')}]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  return { data, loading, error, refetch: fetchData };
+}`,
+      language: 'ts'
+    };
+  }
+
+  generateUtilityCode(specs) {
+    const { name, description } = specs;
+    return {
+      code: `/**
+ * ${description || name}
+ */
+export function ${name}(input: unknown): unknown {
+  // Implementation here
+  return input;
+}
+
+/**
+ * Async version
+ */
+export async function ${name}Async(input: unknown): Promise<unknown> {
+  // Async implementation here
+  return input;
+}`,
+      language: 'ts'
+    };
+  }
+
+  generateTestCode(specs) {
+    const { name, component = name } = specs;
+    return {
+      code: `import { render, screen, fireEvent } from '@testing-library/react';
+import { ${component} } from './${component}';
+
+describe('${component}', () => {
+  it('renders correctly', () => {
+    render(<${component} />);
+    expect(screen.getByText(/expected text/i)).toBeInTheDocument();
+  });
+
+  it('handles user interaction', () => {
+    const mockFn = jest.fn();
+    render(<${component} onAction={mockFn} />);
+    fireEvent.click(screen.getByRole('button'));
+    expect(mockFn).toHaveBeenCalled();
+  });
+
+  it('matches snapshot', () => {
+    const { container } = render(<${component} />);
+    expect(container).toMatchSnapshot();
+  });
+});`,
+      language: 'ts'
+    };
+  }
+
+  generateStylesCode(specs) {
+    const { name, isModule = true } = specs;
+    return {
+      code: `.${name.toLowerCase()} {
+  /* Base styles */
+  display: block;
+  
+  /* Responsive */
+  @media (min-width: 768px) {
+    /* Tablet styles */
+  }
+  
+  @media (min-width: 1024px) {
+    /* Desktop styles */
+  }
+}
+
+.${name.toLowerCase()}--variant {
+  /* Variant styles */
+}`,
+      language: isModule ? 'css' : 'css'
+    };
+  }
+
+  generateGenericCode(specs) {
+    return { code: `// Generated code for: ${JSON.stringify(specs)}\n// Please specify the type parameter`, language: 'txt' };
+  }
+
+  // Create component with boilerplate
+  async createComponent({ name, type = 'functional', props = [], framework = 'react' }) {
+    const specs = { name, type, props, hasState: type.includes('state'), hasEffects: type.includes('effect') };
+    const generated = this.generateComponentCode(specs, framework);
+    
+    return {
+      name,
+      content: generated.code,
+      extension: generated.language === 'tsx' ? '.tsx' : '.jsx',
+      specs
+    };
+  }
+
+  // Smart refactoring
+  async refactorCode({ path, operation, target }) {
+    const normalizedPath = this.normalizePath(path);
+    const file = await this.readFile({ path: normalizedPath });
+    const content = file.content;
+    
+    let result = { success: false, changes: [] };
+    
+    switch (operation) {
+      case 'extractFunction':
+        result = await this.refactorExtractFunction(normalizedPath, content, target);
+        break;
+      case 'renameVariable':
+        result = await this.refactorRename(content, target.oldName, target.newName);
+        break;
+      case 'organizeImports':
+        result = await this.refactorOrganizeImports(content);
+        break;
+      case 'convertToAsync':
+        result = await this.refactorConvertToAsync(content, target);
+        break;
+      default:
+        result = { success: false, error: `Unknown operation: ${operation}` };
+    }
+    
+    return result;
+  }
+
+  async refactorExtractFunction(path, content, target) {
+    const { startLine, endLine, name } = target;
+    const lines = content.split('\n');
+    const extractedCode = lines.slice(startLine - 1, endLine).join('\n');
+    
+    // Simple extraction - in reality, would need to analyze dependencies
+    const functionCode = `function ${name}() {\n${extractedCode}\n}`;
+    
+    return {
+      success: true,
+      changes: [{
+        type: 'extract',
+        description: `Extracted lines ${startLine}-${endLine} into function ${name}`,
+        newFunction: functionCode
+      }]
+    };
+  }
+
+  async refactorRename(content, oldName, newName) {
+    const regex = new RegExp(`\\b${oldName}\\b`, 'g');
+    const newContent = content.replace(regex, newName);
+    const count = (content.match(regex) || []).length;
+    
+    return {
+      success: true,
+      changes: [{
+        type: 'rename',
+        description: `Renamed ${oldName} to ${newName}`,
+        occurrences: count,
+        newContent
+      }]
+    };
+  }
+
+  async refactorOrganizeImports(content) {
+    const importPattern = /^(import\s+.*?from\s+['"].*?['"];?)$/gm;
+    const imports = content.match(importPattern) || [];
+    
+    // Group by type
+    const external = imports.filter(i => !i.includes('./') && !i.includes('@/'));
+    const internal = imports.filter(i => i.includes('@/'));
+    const relative = imports.filter(i => i.includes('./'));
+    
+    const organized = [...external.sort(), '', ...internal.sort(), '', ...relative.sort()];
+    const newContent = content.replace(importPattern, '').trim();
+    
+    return {
+      success: true,
+      changes: [{
+        type: 'organize',
+        description: `Organized ${imports.length} imports`,
+        newContent: organized.join('\n') + '\n\n' + newContent
+      }]
+    };
+  }
+
+  async refactorConvertToAsync(content, target) {
+    // Simple conversion example
+    const { functionName } = target;
+    const pattern = new RegExp(`function\\s+${functionName}\\s*\\([^)]*\\)\\s*\\{`, 'g');
+    
+    let newContent = content.replace(pattern, `async function ${functionName}($1) {`);
+    newContent = newContent.replace(
+      new RegExp(`return\\s+([^;]+);`, 'g'),
+      'return await $1;'
+    );
+    
+    return {
+      success: true,
+      changes: [{
+        type: 'convert',
+        description: `Converted ${functionName} to async`,
+        newContent
+      }]
+    };
+  }
+
+  // Run tests
+  async runTests({ pattern = '', coverage = false }) {
+    const command = coverage 
+      ? `npm test -- --coverage${pattern ? ` --testPathPattern="${pattern}"` : ''}`
+      : `npm test${pattern ? ` -- --testPathPattern="${pattern}"` : ''}`;
+    
+    return await this.executeTerminal({
+      command,
+      reason: 'Running test suite',
+      cwd: this.workingDirectoryPath
+    });
+  }
+
+  // Install dependencies
+  async installDependency({ packages, dev = false, manager = 'npm' }) {
+    if (!Array.isArray(packages) || packages.length === 0) {
+      throw new Error('packages must be a non-empty array');
+    }
+    
+    const cmd = manager === 'yarn'
+      ? `yarn add ${packages.join(' ')}${dev ? ' --dev' : ''}`
+      : `npm install ${packages.join(' ')}${dev ? ' --save-dev' : ''}`;
+    
+    return await this.executeTerminal({
+      command: cmd,
+      reason: `Installing ${packages.join(', ')}${dev ? ' (dev dependencies)' : ''}`,
+      cwd: this.workingDirectoryPath
+    });
+  }
+
+  // Git operations
+  async gitCommand({ command, args = [] }) {
+    const gitCommands = {
+      'status': 'git status',
+      'add': `git add ${args.join(' ')}`,
+      'commit': `git commit -m "${args.join(' ') || 'Update via Ceres AI'}"`,
+      'push': 'git push',
+      'pull': 'git pull',
+      'branch': args.length > 0 ? `git branch ${args[0]}` : 'git branch',
+      'checkout': `git checkout ${args[0]}`,
+      'log': 'git log --oneline -10',
+      'diff': 'git diff',
+      'stash': 'git stash',
+      'pop': 'git stash pop',
+      'merge': `git merge ${args[0]}`,
+      'fetch': 'git fetch',
+      'clone': `git clone ${args[0]}`,
+      'init': 'git init',
+      'remote': args.length > 0 ? `git remote ${args.join(' ')}` : 'git remote -v'
+    };
+    
+    const fullCommand = gitCommands[command] || `git ${command} ${args.join(' ')}`;
+    
+    return await this.executeTerminal({
+      command: fullCommand,
+      reason: `Git ${command} operation`,
+      cwd: this.workingDirectoryPath
+    });
+  }
+
+  // Compare two files
+  async compareFiles({ file1, file2 }) {
+    const [content1, content2] = await Promise.all([
+      this.readFile({ path: this.normalizePath(file1) }),
+      this.readFile({ path: this.normalizePath(file2) })
+    ]);
+    
+    const lines1 = content1.content.split('\n');
+    const lines2 = content2.content.split('\n');
+    const maxLines = Math.max(lines1.length, lines2.length);
+    
+    const diff = [];
+    for (let i = 0; i < maxLines; i++) {
+      const line1 = lines1[i] || '';
+      const line2 = lines2[i] || '';
+      
+      if (line1 !== line2) {
+        diff.push({
+          line: i + 1,
+          file1: line1,
+          file2: line2,
+          type: !line1 ? 'added' : !line2 ? 'removed' : 'modified'
+        });
+      }
+    }
+    
+    return {
+      file1: { path: file1, lines: lines1.length },
+      file2: { path: file2, lines: lines2.length },
+      differences: diff.length,
+      diff
+    };
+  }
+
+  // Extract function from code
+  async extractFunction({ path, startLine, endLine, name }) {
+    return await this.refactorCode({
+      path,
+      operation: 'extractFunction',
+      target: { startLine, endLine, name }
+    });
+  }
+
+  // Add documentation
+  async addDocumentation({ path, type = 'jsdoc' }) {
+    const normalizedPath = this.normalizePath(path);
+    const file = await this.readFile({ path: normalizedPath });
+    const content = file.content;
+    const ext = this.getExtension(normalizedPath);
+    
+    let documented = content;
+    
+    if (type === 'jsdoc') {
+      // Add JSDoc to functions
+      documented = content.replace(
+        /((?:export\s+)?(?:async\s+)?function\s+(\w+)\s*\([^)]*\))/g,
+        `/**\n * $2 - Description here\n * @param {type} name - Description\n * @returns {type} Description\n */\n$1`
+      );
+    } else if (type === 'readme') {
+      // Generate README
+      const projectName = normalizedPath.split('/').pop() || 'Project';
+      documented = `# ${projectName}\n\n## Description\n\nAdd project description here.\n\n## Installation\n\n\`\`\`bash\nnpm install\n\`\`\`\n\n## Usage\n\n\`\`\`bash\nnpm start\n\`\`\`\n\n## Features\n\n- Feature 1\n- Feature 2\n- Feature 3\n\n## Contributing\n\nContributions welcome!\n`;
+    }
+    
+    return {
+      path: normalizedPath,
+      type,
+      originalLength: content.length,
+      newLength: documented.length,
+      content: documented
+    };
+  }
+
+  // Optimize code
+  async optimizeCode({ path, target = 'performance' }) {
+    const normalizedPath = this.normalizePath(path);
+    const file = await this.readFile({ path: normalizedPath });
+    const content = file.content;
+    
+    const optimizations = [];
+    let optimized = content;
+    
+    if (target === 'performance') {
+      // Replace forEach with for...of
+      if (content.includes('.forEach(')) {
+        optimized = optimized.replace(/(\w+)\.forEach\((\w+)\s*=>\s*\{/g, 'for (const $2 of $1) {');
+        optimizations.push('Replaced forEach with for...of for better performance');
+      }
+      
+      // Use const instead of let where possible
+      if (/let\s+\w+\s*=/.test(content)) {
+        // This would need more sophisticated analysis
+        optimizations.push('Consider using const for variables that are not reassigned');
+      }
+    }
+    
+    if (target === 'readability') {
+      // Add early returns
+      if (/if\s*\([^)]+\)\s*\{\s*return/.test(content)) {
+        optimizations.push('Consider using early returns to reduce nesting');
+      }
+    }
+    
+    return {
+      path: normalizedPath,
+      target,
+      optimizations,
+      originalLength: content.length,
+      newLength: optimized.length,
+      content: optimized,
+      applied: optimizations.length > 0
+    };
   }
 }
 
