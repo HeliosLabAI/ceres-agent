@@ -1899,6 +1899,7 @@ class ToolExecutor {
     try {
       const tree = await this.getFileTree({ path: "", depth: 3 });
       const files = tree.entries || [];
+      console.log("analyzeProject: getFileTree returned", files.length, "entries");
     
     // Detect tech stack
     const techStack = {
@@ -1921,11 +1922,14 @@ class ToolExecutor {
     };
     
     const fileNames = files.map(f => f.name.toLowerCase());
+    console.log("analyzeProject: fileNames:", fileNames);
     
     // Try to collect all files, but fall back to just top-level if it fails
     let allFiles = files.filter(f => !f.isDirectory); // Only count actual files, not directories
+    console.log("analyzeProject: initial allFiles (non-dir):", allFiles.length);
     try {
       allFiles = await this.collectAllFiles(tree);
+      console.log("analyzeProject: collectAllFiles returned:", allFiles.length);
     } catch (collectError) {
       console.warn("collectAllFiles failed, using top-level files only:", collectError.message);
       // allFiles already contains only non-directory entries
