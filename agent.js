@@ -1921,7 +1921,15 @@ class ToolExecutor {
     };
     
     const fileNames = files.map(f => f.name.toLowerCase());
-    const allFiles = await this.collectAllFiles(tree);
+    
+    // Try to collect all files, but fall back to just top-level if it fails
+    let allFiles = files;
+    try {
+      allFiles = await this.collectAllFiles(tree);
+    } catch (collectError) {
+      console.warn("collectAllFiles failed, using top-level files only:", collectError.message);
+      allFiles = files;
+    }
     
     // Check for config files
     if (fileNames.includes('package.json')) {
@@ -1984,11 +1992,13 @@ class ToolExecutor {
     
     return result;
     } catch (error) {
-      // Emit error to UI
+      // Emit error to UI with detailed info
+      console.error("analyzeProject failed:", error);
       this.emitToUI("tool_operation", {
         type: "analyzeProject",
         summary: "Error analyzing project",
         error: error.message,
+        stack: error.stack,
         timestamp: Date.now()
       });
       throw error;
