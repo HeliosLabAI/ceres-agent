@@ -2969,29 +2969,56 @@ function renderOperationsSection(operations, count, id, useTyping = false) {
   // Build individual file list with change counts
   let fileListHtml = '';
   
-  // Created files
+  // Created files with Open button
   fileCreates.forEach(op => {
     const lines = op.content ? op.content.split('\n').length : 0;
-    const lineRange = lines > 0 ? ` L1-${lines}` : '';
+    const fileName = op.path.split('/').pop();
+    const fileExt = fileName.split('.').pop().toLowerCase();
+    const fileTypeLabel = fileExt.toUpperCase();
     fileListHtml += `
-      <div style="padding: 1px 0; display: flex; align-items: center; gap: 4px; line-height: 1.3;">
-        <span style="color: #22c55e; font-size: 11px;">Created</span>
-        <span style="color: #0ea5e9; font-family: monospace; font-size: 12px;">${escapeHtml(op.path)}${lineRange}</span>
-        <span style="color: #22c55e; font-size: 11px; margin-left: auto;">+${lines}/-0</span>
+      <div style="padding: 8px 0; border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color: #6b7280; flex-shrink: 0;">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+          <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+            <span style="color: #111827; font-family: monospace; font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(fileName)}</span>
+            <span style="color: #6b7280; font-size: 11px;">Document • ${fileTypeLabel}</span>
+          </div>
+        </div>
+        <button class="preview-file-btn" data-path="${escapeHtml(op.path)}" data-content="${encodeURIComponent(op.content || '')}" style="padding: 6px 14px; border: 1px solid #e5e7eb; background: white; color: #374151; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; display: flex; align-items: center; gap: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: all 0.2s; flex-shrink: 0;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: #22c55e;"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+          Open
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: #9ca3af;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </button>
       </div>`;
   });
   
-  // Edited files
+  // Edited files with Open button
   fileEdits.forEach(op => {
     const added = op.diffAdded || 1;
     const removed = op.diffRemoved || 1;
-    const lineRange = op.lineRange ? ` L${op.lineRange.start}-${op.lineRange.end}` : '';
+    const fileName = op.path.split('/').pop();
+    const fileExt = fileName.split('.').pop().toLowerCase();
+    const fileTypeLabel = fileExt.toUpperCase();
     fileListHtml += `
-      <div style="padding: 1px 0; display: flex; align-items: center; gap: 4px; line-height: 1.3;">
-        <span style="color: #f59e0b; font-size: 11px;">Edited</span>
-        <span style="color: #0ea5e9; font-family: monospace; font-size: 12px;">${escapeHtml(op.path)}${lineRange}</span>
-        <span style="color: #22c55e; font-size: 11px; margin-left: auto;">+${added}</span>
-        <span style="color: #ef4444; font-size: 11px;">-${removed}</span>
+      <div style="padding: 8px 0; border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color: #6b7280; flex-shrink: 0;">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+          <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+            <span style="color: #111827; font-family: monospace; font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(fileName)}</span>
+            <span style="color: #6b7280; font-size: 11px;">Document • ${fileTypeLabel} <span style="color: #22c55e;">+${added}</span> <span style="color: #ef4444;">-${removed}</span></span>
+          </div>
+        </div>
+        <button class="preview-file-btn" data-path="${escapeHtml(op.path)}" data-content="${encodeURIComponent(op.newText || op.diff || '')}" style="padding: 6px 14px; border: 1px solid #e5e7eb; background: white; color: #374151; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; display: flex; align-items: center; gap: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: all 0.2s; flex-shrink: 0;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: #22c55e;"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+          Open
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: #9ca3af;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </button>
       </div>`;
   });
   
@@ -4776,10 +4803,18 @@ function previewLocalPort(port, title = 'Local Server') {
 // Open file in browser panel
 function openFileInBrowser(path) {
   const file = fileExplorerState.files.get(path);
-  if (!file) return;
+  if (!file) {
+    console.error('File not found:', path);
+    showToast('Error: File not found', 'error');
+    return;
+  }
   
   // Check if it's HTML
   const isHtmlFile = file.name.endsWith('.html') || file.name.endsWith('.htm');
+  
+  // Show preview panel first
+  const previewPanel = document.getElementById('filePreviewPanel');
+  if (previewPanel) previewPanel.classList.add('active');
   
   if (isHtmlFile) {
     // Open HTML in browser preview
@@ -4787,25 +4822,37 @@ function openFileInBrowser(path) {
     renderTabs();
     showFileInEditor(path);
   } else {
-    // For other files, create a browser tab with file:// protocol
-    const browserPath = `file-browser-${Date.now()}`;
-    fileExplorerState.files.set(browserPath, {
-      name: `View: ${file.name}`,
-      content: '',
-      type: 'browser',
-      size: 0,
-      isNew: true,
-      isBrowser: true,
-      url: `file://${path}`,
-      isFilePreview: true,
-      originalFile: path
-    });
+    // For other files, show content in preview panel with syntax highlighting
+    const previewContent = document.getElementById('previewContent');
+    const breadcrumbFile = document.getElementById('breadcrumbFile');
+    const browserBar = document.getElementById('browserBar');
+    const browserFrame = document.getElementById('browserFrame');
+    const urlInput = document.getElementById('urlInput');
     
-    fileExplorerState.openTabs.set(browserPath, '');
-    fileExplorerState.activeFile = browserPath;
+    // Update breadcrumb
+    if (breadcrumbFile) {
+      breadcrumbFile.textContent = file.name;
+    }
     
-    renderTabs();
-    showBrowserView(browserPath);
+    // Hide browser UI, show file content
+    if (browserBar) browserBar.classList.add('hidden');
+    if (browserFrame) browserFrame.classList.add('hidden');
+    if (previewContent) previewContent.classList.remove('hidden');
+    
+    // Reset URL input
+    if (urlInput) {
+      urlInput.readOnly = false;
+      urlInput.value = '';
+    }
+    
+    // Simple syntax highlighting
+    const highlightedContent = highlightSyntax(file.content || '', file.name);
+    if (previewContent) {
+      previewContent.innerHTML = `<pre style="margin:0; white-space:pre-wrap; word-break:break-word;">${highlightedContent}</pre>`;
+    }
+    
+    // Make sure preview panel is visible
+    if (previewPanel) previewPanel.classList.add('active');
   }
 }
 
@@ -5152,6 +5199,53 @@ document.addEventListener('click', (e) => {
     openFileInBrowser(tempPath);
     
     showToast(`Opening ${path.split('/').pop()}...`);
+    return;
+  }
+  
+  // Handle preview file button from operations section (the one that looks like README.md with Open button)
+  const previewFileBtn = e.target.closest('.preview-file-btn');
+  if (previewFileBtn) {
+    console.log('Preview button clicked:', previewFileBtn.dataset);
+    const path = previewFileBtn.dataset.path;
+    let content = decodeURIComponent(previewFileBtn.dataset.content || '');
+    const fileName = path.split('/').pop();
+    
+    // If content is empty (edited files only store diff), try to get from aiModifiedFiles
+    if (!content && window.aiAgent?.aiModifiedFiles) {
+      const modifiedFile = window.aiAgent.aiModifiedFiles.find(f => f.path === path);
+      if (modifiedFile) {
+        content = modifiedFile.content || '';
+        console.log('Got content from aiModifiedFiles:', content.length);
+      }
+    }
+    
+    console.log('Opening preview for:', fileName, 'Content length:', content.length);
+    
+    // Create temporary file entry for preview
+    const tempPath = `preview-ops-${Date.now()}`;
+    const fileExt = fileName.split('.').pop().toLowerCase();
+    const isHtml = fileExt === 'html' || fileExt === 'htm';
+    
+    fileExplorerState.files.set(tempPath, {
+      name: fileName,
+      content: content,
+      type: isHtml ? 'text/html' : 'text/plain',
+      size: content.length,
+      isNew: false,
+      isBrowser: false
+    });
+    
+    console.log('Created temp file entry:', tempPath, fileExplorerState.files.get(tempPath));
+    
+    // Open in browser preview
+    fileExplorerState.openTabs.set(tempPath, '');
+    fileExplorerState.activeFile = tempPath;
+    renderTabs();
+    
+    // Use the openFileInBrowser function for preview
+    openFileInBrowser(tempPath);
+    
+    showToast(`Opening ${fileName}...`);
     return;
   }
 });

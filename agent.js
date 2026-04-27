@@ -1208,11 +1208,19 @@ class ToolExecutor {
         // Invalidate cache
         this.fileCache.delete(normalizedPath);
         
-        // Update tracking with original content for revert
+        // Update tracking with original content for revert and new content for preview
         const existingIndex = this.aiModifiedFiles.findIndex(f => f.path === normalizedPath);
         if (existingIndex >= 0) {
           this.aiModifiedFiles[existingIndex].originalContent = originalContent;
+          this.aiModifiedFiles[existingIndex].content = patched;
           this.aiModifiedFiles[existingIndex].type = 'edited';
+        } else {
+          this.aiModifiedFiles.push({ 
+            path: normalizedPath, 
+            type: 'edited', 
+            content: patched, 
+            originalContent 
+          });
         }
         
         const newLines = patched.split('\n').length;
