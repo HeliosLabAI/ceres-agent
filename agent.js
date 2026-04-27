@@ -1881,10 +1881,24 @@ class ToolExecutor {
 
   // Analyze entire project structure and detect tech stack
   async analyzeProject() {
-    this.ensureWorkingDirectory();
+    // Try to ensure working directory, but continue even if not set
+    try {
+      this.ensureWorkingDirectory();
+    } catch (e) {
+      // If no working directory, return empty analysis
+      return {
+        totalFiles: 0,
+        directories: [],
+        techStack: { framework: null, language: null },
+        entryPoints: [],
+        summary: "No folder opened. Click File → Open Folder first.",
+        error: e.message
+      };
+    }
     
-    const tree = await this.getFileTree({ path: "", depth: 3 });
-    const files = tree.entries || [];
+    try {
+      const tree = await this.getFileTree({ path: "", depth: 3 });
+      const files = tree.entries || [];
     
     // Detect tech stack
     const techStack = {
@@ -1969,6 +1983,16 @@ class ToolExecutor {
     });
     
     return result;
+    } catch (error) {
+      // Emit error to UI
+      this.emitToUI("tool_operation", {
+        type: "analyzeProject",
+        summary: "Error analyzing project",
+        error: error.message,
+        timestamp: Date.now()
+      });
+      throw error;
+    }
   }
 
   async collectAllFiles(tree, allFiles = []) {
