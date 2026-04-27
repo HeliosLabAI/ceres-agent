@@ -1803,6 +1803,10 @@ function createFileDiffEntry(details) {
             <span style="color: #666; font-weight: 500;">${diffIndicator}</span>
           </div>
           <div style="display: flex; gap: 6px;">
+            <button class="diff-open-btn" data-path="${path}" style="padding: 3px 10px; border: 1px solid #22c55e; background: #22c55e; color: white; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 500; display: flex; align-items: center; gap: 4px;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+              Open
+            </button>
             <button class="diff-reject-btn" data-path="${path}" style="padding: 3px 10px; border: 1px solid #e5e7eb; background: white; color: #374151; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 500; display: flex; align-items: center; gap: 4px;">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
               Reject
@@ -4644,9 +4648,42 @@ function showFileInEditor(path) {
   const breadcrumbFile = document.getElementById('breadcrumbFile');
   const browserBar = document.getElementById('browserBar');
   const browserFrame = document.getElementById('browserFrame');
+  const urlInput = document.getElementById('urlInput');
   
   const file = fileExplorerState.files.get(path);
   if (!file || !previewContent) return;
+  
+  // Check if it's an HTML file - preview in browser instead
+  const isHtmlFile = file.name.endsWith('.html') || file.name.endsWith('.htm');
+  
+  if (isHtmlFile && browserFrame && browserBar) {
+    // Show preview panel
+    if (previewPanel) previewPanel.classList.add('active');
+    
+    // Update breadcrumb
+    if (breadcrumbFile) {
+      breadcrumbFile.textContent = file.name + ' (Preview)';
+    }
+    
+    // Show browser UI for HTML preview
+    previewContent.classList.add('hidden');
+    browserBar.classList.remove('hidden');
+    browserFrame.classList.remove('hidden');
+    
+    // Create blob URL for HTML content preview
+    const blob = new Blob([file.content], { type: 'text/html' });
+    const blobUrl = URL.createObjectURL(blob);
+    browserFrame.src = blobUrl;
+    
+    if (urlInput) {
+      urlInput.value = 'Preview: ' + file.name;
+      urlInput.readOnly = true;
+    }
+    
+    // Store reference to clean up blob URL later
+    fileExplorerState.currentHtmlPreview = blobUrl;
+    return;
+  }
   
   // Show preview panel
   if (previewPanel) previewPanel.classList.add('active');
@@ -4661,9 +4698,83 @@ function showFileInEditor(path) {
   if (browserFrame) browserFrame.classList.add('hidden');
   previewContent.classList.remove('hidden');
   
+  // Reset URL input
+  if (urlInput) {
+    urlInput.readOnly = false;
+  }
+  
   // Simple syntax highlighting
   const highlightedContent = highlightSyntax(file.content, file.name);
   previewContent.innerHTML = `<pre style="margin:0; white-space:pre-wrap; word-break:break-word;">${highlightedContent}</pre>`;
+}
+
+// Function to preview a local port
+function previewLocalPort(port, title = 'Local Server') {
+  const path = `port-${port}`;
+  
+  // Check if already exists
+  if (fileExplorerState.files.has(path)) {
+    // Just activate the existing tab
+    fileExplorerState.activeFile = path;
+    renderTabs();
+    showBrowserView(path);
+    return;
+  }
+  
+  // Create new browser tab for this port
+  fileExplorerState.files.set(path, {
+    name: `${title} :${port}`,
+    content: '',
+    type: 'browser',
+    size: 0,
+    isNew: true,
+    isBrowser: true,
+    url: `http://localhost:${port}`,
+    isPortPreview: true,
+    port: port
+  });
+  
+  fileExplorerState.openTabs.set(path, '');
+  fileExplorerState.activeFile = path;
+  
+  renderTabs();
+  showBrowserView(path);
+}
+
+// Open file in browser panel
+function openFileInBrowser(path) {
+  const file = fileExplorerState.files.get(path);
+  if (!file) return;
+  
+  // Check if it's HTML
+  const isHtmlFile = file.name.endsWith('.html') || file.name.endsWith('.htm');
+  
+  if (isHtmlFile) {
+    // Open HTML in browser preview
+    fileExplorerState.activeFile = path;
+    renderTabs();
+    showFileInEditor(path);
+  } else {
+    // For other files, create a browser tab with file:// protocol
+    const browserPath = `file-browser-${Date.now()}`;
+    fileExplorerState.files.set(browserPath, {
+      name: `View: ${file.name}`,
+      content: '',
+      type: 'browser',
+      size: 0,
+      isNew: true,
+      isBrowser: true,
+      url: `file://${path}`,
+      isFilePreview: true,
+      originalFile: path
+    });
+    
+    fileExplorerState.openTabs.set(browserPath, '');
+    fileExplorerState.activeFile = browserPath;
+    
+    renderTabs();
+    showBrowserView(browserPath);
+  }
 }
 
 function highlightSyntax(content, filename) {
@@ -4974,6 +5085,41 @@ document.addEventListener('click', (e) => {
     }
     
     showToast(`Rejected ${path}`);
+    return;
+  }
+  
+  // Handle Open button - preview file in browser
+  const openBtn = e.target.closest('.diff-open-btn');
+  if (openBtn) {
+    const path = openBtn.dataset.path;
+    
+    // Find the file content
+    let fileContent = '';
+    const file = window.aiAgent?.aiModifiedFiles?.find(f => f.path === path);
+    if (file) {
+      fileContent = file.content || '';
+    }
+    
+    // Create temporary file entry for preview
+    const tempPath = `preview-${Date.now()}`;
+    fileExplorerState.files.set(tempPath, {
+      name: path.split('/').pop() || path,
+      content: fileContent,
+      type: 'text/html',
+      size: fileContent.length,
+      isNew: false,
+      isBrowser: false
+    });
+    
+    // Open in browser preview
+    fileExplorerState.openTabs.set(tempPath, '');
+    fileExplorerState.activeFile = tempPath;
+    renderTabs();
+    
+    // Use the openFileInBrowser function for preview
+    openFileInBrowser(tempPath);
+    
+    showToast(`Opening ${path.split('/').pop()}...`);
     return;
   }
 });
