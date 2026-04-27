@@ -1898,8 +1898,8 @@ class ToolExecutor {
     
     try {
       const tree = await this.getFileTree({ path: "", depth: 3 });
-      const files = tree.entries || [];
-      console.log("analyzeProject: getFileTree returned", files.length, "entries");
+      const files = tree.tree || []; // getFileTree returns { path, tree }, not { entries }
+      console.log("analyzeProject: getFileTree returned", files.length, "files");
     
     // Detect tech stack
     const techStack = {
@@ -1925,7 +1925,7 @@ class ToolExecutor {
     console.log("analyzeProject: fileNames:", fileNames);
     
     // Try to collect all files, but fall back to just top-level if it fails
-    let allFiles = files.filter(f => !f.isDirectory); // Only count actual files, not directories
+    let allFiles = files.filter(f => f.type === "file"); // Only count actual files, not directories
     console.log("analyzeProject: initial allFiles (non-dir):", allFiles.length);
     try {
       allFiles = await this.collectAllFiles(tree);
@@ -2010,16 +2010,18 @@ class ToolExecutor {
   }
 
   async collectAllFiles(tree, allFiles = []) {
-    if (!tree.entries) return allFiles;
+    // tree is an array of nodes from getFileTree, not an object with .entries
+    const entries = Array.isArray(tree) ? tree : (tree.tree || []);
+    if (!entries.length) return allFiles;
     
-    for (const entry of tree.entries) {
-      if (!entry.isDirectory) {
+    for (const entry of entries) {
+      if (entry.type === "file") {
         allFiles.push(entry);
-      } else if (!this.ignoredDirectories.has(entry.name)) {
-        try {
-          const subTree = await this.getFileTree({ path: entry.path, depth: 1 });
-          await this.collectAllFiles(subTree, allFiles);
-        } catch (e) {}
+      } else if (entry.type === "directory" && !this.ignoredDirectories.has(entry.name)) {
+        // Recursively collect from children
+        if (entry.children && entry.children.length) {
+          await this.collectAllFiles(entry.children, allFiles);
+        }
       }
     }
     return allFiles;
