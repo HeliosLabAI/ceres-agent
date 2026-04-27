@@ -1923,12 +1923,12 @@ class ToolExecutor {
     const fileNames = files.map(f => f.name.toLowerCase());
     
     // Try to collect all files, but fall back to just top-level if it fails
-    let allFiles = files;
+    let allFiles = files.filter(f => !f.isDirectory); // Only count actual files, not directories
     try {
       allFiles = await this.collectAllFiles(tree);
     } catch (collectError) {
       console.warn("collectAllFiles failed, using top-level files only:", collectError.message);
-      allFiles = files;
+      // allFiles already contains only non-directory entries
     }
     
     // Check for config files
