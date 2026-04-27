@@ -1983,7 +1983,7 @@ class ToolExecutor {
     };
     
     // Emit to UI
-    this.emitToUI("tool_operation", {
+    this.agent.emitToUI("tool_operation", {
       type: "analyzeProject",
       summary: result.summary,
       techStack: result.techStack,
@@ -1994,7 +1994,7 @@ class ToolExecutor {
     } catch (error) {
       // Emit error to UI with detailed info
       console.error("analyzeProject failed:", error);
-      this.emitToUI("tool_operation", {
+      this.agent.emitToUI("tool_operation", {
         type: "analyzeProject",
         summary: "Error analyzing project",
         error: error.message,
@@ -2075,7 +2075,7 @@ class ToolExecutor {
     };
     
     // Emit to UI
-    this.emitToUI("tool_operation", {
+    this.agent.emitToUI("tool_operation", {
       type: "analyzeCode",
       fileName: normalizedPath.split('/').pop(),
       complexity: analysis.complexity.level,
@@ -2252,7 +2252,7 @@ class ToolExecutor {
     analysis.summary = `Found ${analysis.imports.length} files with imports, ${allImports.size} unique imports, ${analysis.unused.length} potentially unused dependencies`;
     
     // Emit to UI
-    this.emitToUI("tool_operation", {
+    this.agent.emitToUI("tool_operation", {
       type: "analyzeDependencies",
       depCount: analysis.npm?.all?.length || 0,
       unusedCount: analysis.unused.length,
@@ -2278,7 +2278,7 @@ class ToolExecutor {
     const result = generator.call(this, specs, framework);
     
     // Emit to UI
-    this.emitToUI("tool_operation", {
+    this.agent.emitToUI("tool_operation", {
       type: "generateCode",
       codeType: type,
       lineCount: result.code?.split('\n').length || 0,
@@ -2480,7 +2480,7 @@ describe('${component}', () => {
     };
     
     // Emit to UI
-    this.emitToUI("tool_operation", {
+    this.agent.emitToUI("tool_operation", {
       type: "createComponent",
       componentName: name,
       props: props,
@@ -2517,7 +2517,7 @@ describe('${component}', () => {
     }
     
     // Emit to UI
-    this.emitToUI("tool_operation", {
+    this.agent.emitToUI("tool_operation", {
       type: "refactorCode",
       fileName: normalizedPath.split('/').pop(),
       operation,
@@ -2618,7 +2618,7 @@ describe('${component}', () => {
     });
     
     // Emit to UI
-    this.emitToUI("tool_operation", {
+    this.agent.emitToUI("tool_operation", {
       type: "runTests",
       passed: result.success,
       passedCount: result.success ? 1 : 0,
@@ -2647,7 +2647,7 @@ describe('${component}', () => {
     });
     
     // Emit to UI
-    this.emitToUI("tool_operation", {
+    this.agent.emitToUI("tool_operation", {
       type: "installDependency",
       packages,
       dev,
@@ -2687,7 +2687,7 @@ describe('${component}', () => {
     });
     
     // Emit to UI
-    this.emitToUI("tool_operation", {
+    this.agent.emitToUI("tool_operation", {
       type: "gitCommand",
       command,
       success: result.success,
@@ -2732,7 +2732,7 @@ describe('${component}', () => {
     };
     
     // Emit to UI
-    this.emitToUI("tool_operation", {
+    this.agent.emitToUI("tool_operation", {
       type: "compareFiles",
       file1: file1.split('/').pop(),
       file2: file2.split('/').pop(),
@@ -2785,7 +2785,7 @@ describe('${component}', () => {
     };
     
     // Emit to UI
-    this.emitToUI("tool_operation", {
+    this.agent.emitToUI("tool_operation", {
       type: "addDocumentation",
       fileName: normalizedPath.split('/').pop(),
       docType: type,
@@ -2837,7 +2837,7 @@ describe('${component}', () => {
     };
     
     // Emit to UI
-    this.emitToUI("tool_operation", {
+    this.agent.emitToUI("tool_operation", {
       type: "optimizeCode",
       fileName: normalizedPath.split('/').pop(),
       target,
