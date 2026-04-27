@@ -1965,6 +1965,19 @@ function createAgentLogEntry(action, details) {
     case 'grepSearch':
     case 'getFileTree':
     case 'getSymbols':
+    // NEW ADVANCED TOOLS
+    case 'analyzeProject':
+    case 'analyzeCode':
+    case 'analyzeDependencies':
+    case 'generateCode':
+    case 'createComponent':
+    case 'refactorCode':
+    case 'runTests':
+    case 'installDependency':
+    case 'gitCommand':
+    case 'compareFiles':
+    case 'addDocumentation':
+    case 'optimizeCode':
       const op = formatToolOperation(action, details);
       if (op) {
         // Handle batch operations that return arrays
@@ -2103,6 +2116,105 @@ function formatToolOperation(action, details) {
   if (action === 'validateSyntax' || (action === 'tool_success' && details.name === 'validateSyntax')) {
     return { type: 'validate', path: result?.path, valid: result?.valid };
   }
+  
+  // NEW ADVANCED TOOLS
+  if (action === 'analyzeProject' || (action === 'tool_success' && details.name === 'analyzeProject')) {
+    return { 
+      type: 'analyzeProject', 
+      summary: result?.summary || result?.techStack?.framework || 'Project analyzed',
+      techStack: result?.techStack 
+    };
+  }
+  if (action === 'analyzeCode' || (action === 'tool_success' && details.name === 'analyzeCode')) {
+    return { 
+      type: 'analyzeCode', 
+      fileName: result?.path?.split('/').pop() || result?.fileName,
+      complexity: result?.complexity?.level || result?.metrics?.complexity,
+      functionCount: result?.functions?.length || result?.functionCount,
+      importCount: result?.imports?.length || result?.importCount
+    };
+  }
+  if (action === 'analyzeDependencies' || (action === 'tool_success' && details.name === 'analyzeDependencies')) {
+    return { 
+      type: 'analyzeDependencies',
+      depCount: result?.npm?.all?.length || result?.depCount,
+      unusedCount: result?.unused?.length || result?.unusedCount,
+      importCount: result?.importCount
+    };
+  }
+  if (action === 'generateCode' || (action === 'tool_success' && details.name === 'generateCode')) {
+    return { 
+      type: 'generateCode',
+      codeType: result?.type || result?.codeType,
+      lineCount: result?.code?.split('\n').length || result?.lineCount,
+      framework: result?.framework
+    };
+  }
+  if (action === 'createComponent' || (action === 'tool_success' && details.name === 'createComponent')) {
+    return { 
+      type: 'createComponent',
+      componentName: result?.name || result?.componentName,
+      props: result?.specs?.props || result?.props,
+      framework: result?.framework || result?.specs?.framework
+    };
+  }
+  if (action === 'refactorCode' || (action === 'tool_success' && details.name === 'refactorCode')) {
+    return { 
+      type: 'refactorCode',
+      fileName: result?.path?.split('/').pop() || result?.fileName,
+      operation: result?.operation,
+      changes: result?.changes?.length || result?.changes
+    };
+  }
+  if (action === 'runTests' || (action === 'tool_success' && details.name === 'runTests')) {
+    return { 
+      type: 'runTests',
+      passed: result?.success || result?.passed,
+      passedCount: result?.passedCount,
+      failedCount: result?.failedCount,
+      duration: result?.duration
+    };
+  }
+  if (action === 'installDependency' || (action === 'tool_success' && details.name === 'installDependency')) {
+    return { 
+      type: 'installDependency',
+      packages: result?.packages,
+      dev: result?.dev
+    };
+  }
+  if (action === 'gitCommand' || (action === 'tool_success' && details.name === 'gitCommand')) {
+    return { 
+      type: 'gitCommand',
+      command: result?.command,
+      success: result?.success,
+      message: result?.stdout?.substring(0, 50) || result?.message
+    };
+  }
+  if (action === 'compareFiles' || (action === 'tool_success' && details.name === 'compareFiles')) {
+    return { 
+      type: 'compareFiles',
+      file1: result?.file1?.path?.split('/').pop() || result?.file1,
+      file2: result?.file2?.path?.split('/').pop() || result?.file2,
+      differences: result?.differences || result?.diff?.length
+    };
+  }
+  if (action === 'addDocumentation' || (action === 'tool_success' && details.name === 'addDocumentation')) {
+    return { 
+      type: 'addDocumentation',
+      fileName: result?.path?.split('/').pop() || result?.fileName,
+      docType: result?.type || result?.docType,
+      linesAdded: result?.linesAdded || (result?.newLength - result?.originalLength)
+    };
+  }
+  if (action === 'optimizeCode' || (action === 'tool_success' && details.name === 'optimizeCode')) {
+    return { 
+      type: 'optimizeCode',
+      fileName: result?.path?.split('/').pop() || result?.fileName,
+      target: result?.target,
+      optimizations: result?.optimizations?.length || result?.optimizations
+    };
+  }
+  
   return null;
 }
 
