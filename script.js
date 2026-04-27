@@ -1792,27 +1792,59 @@ function createFileDiffEntry(details) {
     addPendingChange({ path, type, additions, deletions });
   }, 0);
 
+  // Get file extension and type label
+  const fileExt = path.split('.').pop().toLowerCase();
+  const fileTypeLabels = {
+    'html': 'HTML Document',
+    'htm': 'HTML Document',
+    'css': 'CSS Stylesheet',
+    'js': 'JavaScript',
+    'json': 'JSON File',
+    'md': 'Markdown Document',
+    'txt': 'Text Document',
+    'py': 'Python Script',
+    'java': 'Java Source',
+    'cpp': 'C++ Source',
+    'c': 'C Source',
+    'ts': 'TypeScript',
+    'jsx': 'React Component',
+    'tsx': 'React Component',
+    'vue': 'Vue Component',
+    'php': 'PHP Script',
+    'sql': 'SQL Query',
+    'xml': 'XML Document',
+    'yaml': 'YAML File',
+    'yml': 'YAML File'
+  };
+  const fileTypeLabel = fileTypeLabels[fileExt] || `${fileExt.toUpperCase()} File`;
+  
   // Light black/gray styling for diff view with Accept/Reject buttons
   return {
     type: 'file_diff',
     html: `
-      <div style="margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; background: white;">
-        <div style="background: #f8f8f8; padding: 8px 12px; font-size: 12px; border-bottom: 1px solid #ddd; display: flex; align-items: center; justify-content: space-between;">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="font-family: 'SF Mono', Monaco, monospace; color: #3a3a3a;">${escapeHtml(path)}</span>
-            <span style="color: #666; font-weight: 500;">${diffIndicator}</span>
+      <div style="margin: 8px 0; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        <div style="background: #f9fafb; padding: 10px 14px; font-size: 13px; border-bottom: 1px solid #e5e7eb; display: flex; align-items: center; justify-content: space-between;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color: #6b7280;">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+            </svg>
+            <div style="display: flex; flex-direction: column; gap: 2px;">
+              <span style="font-family: 'SF Mono', Monaco, monospace; color: #111827; font-weight: 500;">${escapeHtml(path.split('/').pop())}</span>
+              <span style="color: #6b7280; font-size: 11px;">${fileTypeLabel} • ${diffIndicator}</span>
+            </div>
           </div>
-          <div style="display: flex; gap: 6px;">
-            <button class="diff-open-btn" data-path="${path}" style="padding: 3px 10px; border: 1px solid #22c55e; background: #22c55e; color: white; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 500; display: flex; align-items: center; gap: 4px;">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <button class="diff-open-btn" data-path="${path}" title="Open in browser preview" style="padding: 6px 14px; border: 1px solid #e5e7eb; background: white; color: #374151; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; display: flex; align-items: center; gap: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: all 0.2s;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: #22c55e;"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
               Open
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: #9ca3af; margin-left: 2px;"><polyline points="6 9 12 15 18 9"></polyline></svg>
             </button>
-            <button class="diff-reject-btn" data-path="${path}" style="padding: 3px 10px; border: 1px solid #e5e7eb; background: white; color: #374151; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 500; display: flex; align-items: center; gap: 4px;">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-              Reject
+            <button class="diff-reject-btn" data-path="${path}" title="Reject changes" style="padding: 6px 12px; border: 1px solid #e5e7eb; background: white; color: #6b7280; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; display: flex; align-items: center; gap: 4px; transition: all 0.2s;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
-            <button class="diff-accept-btn" data-path="${path}" data-content="${encodeURIComponent(safeContent)}" style="padding: 3px 10px; border: 1px solid #3b82f6; background: #3b82f6; color: white; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 500; display: flex; align-items: center; gap: 4px;">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <button class="diff-accept-btn" data-path="${path}" data-content="${encodeURIComponent(safeContent)}" title="Accept changes" style="padding: 6px 14px; border: 1px solid #3b82f6; background: #3b82f6; color: white; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; display: flex; align-items: center; gap: 6px; transition: all 0.2s;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
               Accept
             </button>
           </div>
