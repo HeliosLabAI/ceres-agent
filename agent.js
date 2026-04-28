@@ -314,6 +314,20 @@ TERMINAL COMMANDS - CRITICAL:
             plan: decision.plan,
             current: decision.current_step
           });
+          
+          // Auto-create task list for complex projects (3+ steps)
+          if (decision.plan.length >= 3) {
+            this.emitToUI("tasks", {
+              title: decision.goal || "Project Tasks",
+              tasks: decision.plan.map((step, i) => ({
+                id: i,
+                text: typeof step === 'string' ? step : (step.description || step.name || `Step ${i + 1}`),
+                description: typeof step === 'string' ? '' : (step.details || ''),
+                completed: i < (decision.current_step || 0)
+              }))
+            });
+          }
+          
           this.planningShown = true;
         }
 

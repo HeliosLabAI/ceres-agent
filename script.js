@@ -2004,6 +2004,16 @@ function createAgentLogEntry(action, details) {
         open: true
       };
     
+    case 'tasks':
+      // Create or update task list
+      tasksState.title = details.title || 'Tasks';
+      tasksState.tasks = details.tasks || [];
+      return {
+        type: 'tasks',
+        title: tasksState.title,
+        tasks: tasksState.tasks
+      };
+    
     case 'complete':
       return { type: 'complete', message: details.message };
       
