@@ -6,53 +6,6 @@ const state = {
 
 let showToast; // Will be set as alias to showNotification
 
-// Theme Management
-const THEME_STORAGE_KEY = 'ceres-theme-preference';
-
-function getStoredTheme() {
-  return localStorage.getItem(THEME_STORAGE_KEY) || 'light';
-}
-
-function setStoredTheme(theme) {
-  localStorage.setItem(THEME_STORAGE_KEY, theme);
-}
-
-function applyTheme(theme) {
-  document.documentElement.setAttribute('data-theme', theme);
-  
-  // Update toggle button icons
-  const lightIcon = document.querySelector('.theme-icon-light');
-  const darkIcon = document.querySelector('.theme-icon-dark');
-  if (lightIcon && darkIcon) {
-    lightIcon.style.display = theme === 'dark' ? 'none' : 'block';
-    darkIcon.style.display = theme === 'dark' ? 'block' : 'none';
-  }
-}
-
-function toggleTheme() {
-  const currentTheme = getStoredTheme();
-  const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-  
-  setStoredTheme(newTheme);
-  applyTheme(newTheme);
-  
-  // Show notification
-  if (typeof showNotification === 'function') {
-    showNotification(`Switched to ${newTheme} mode`, 'success');
-  }
-}
-
-function initializeTheme() {
-  const savedTheme = getStoredTheme();
-  applyTheme(savedTheme);
-  
-  // Setup toggle button listener
-  const themeToggle = document.getElementById('themeToggle');
-  if (themeToggle) {
-    themeToggle.addEventListener('click', toggleTheme);
-  }
-}
-
 const SETTINGS_STORAGE_KEY = 'ceresReplicaSettings';
 
 const defaultSettings = {
@@ -1105,9 +1058,6 @@ document.addEventListener('DOMContentLoaded', () => {
   try {
   console.log('DOMContentLoaded fired');
   
-  // Initialize theme
-  initializeTheme();
-  
   // Load Ollama models
   loadOllamaModelsToDropdown();
   
@@ -1963,6 +1913,13 @@ let agentSessionState = {
   messageId: null
 };
 
+// Task state for tracking subtasks
+let tasksState = {
+  tasks: [],
+  title: '',
+  messageId: null
+};
+
 // Reset agent session
 function resetAgentSession() {
   agentSessionState = {
@@ -1970,6 +1927,57 @@ function resetAgentSession() {
     fileCount: 0,
     messageId: null
   };
+  tasksState = {
+    tasks: [],
+    title: '',
+    messageId: null
+  };
+}
+
+// Create a new task list for the AI
+function createTaskList(title, tasks) {
+  tasksState = {
+    title: title || 'Tasks',
+    tasks: tasks.map((t, i) => ({
+      id: i,
+      text: typeof t === 'string' ? t : t.text,
+      description: typeof t === 'string' ? '' : (t.description || ''),
+      completed: false
+    })),
+    messageId: null
+  };
+  
+  const entry = {
+    type: 'tasks',
+    title: tasksState.title,
+    tasks: tasksState.tasks
+  };
+  
+  tasksState.messageId = addMessageToChat('agent', entry);
+  return tasksState.messageId;
+}
+
+// Update task completion status
+function updateTask(taskId, completed) {
+  const task = tasksState.tasks.find(t => t.id === taskId);
+  if (task) {
+    task.completed = completed;
+    
+    // Update the message
+    if (tasksState.messageId) {
+      const entry = {
+        type: 'tasks',
+        title: tasksState.title,
+        tasks: tasksState.tasks
+      };
+      updateMessageInChat(tasksState.messageId, entry);
+    }
+  }
+}
+
+// Complete a task by index
+function completeTask(index) {
+  updateTask(index, true);
 }
 
 // Create agent log entry - Cursor-style with collapsible sections
@@ -2947,6 +2955,9 @@ function renderAgentStructuredContent(content, msgId) {
     case 'operations':
       return renderOperationsSection(content.items || [], content.count, msgId);
     
+    case 'tasks':
+      return renderTasksSection(content.tasks || [], content.title, msgId);
+    
     case 'complete': {
       // Complete message - collapsible summary by default
       const msg = content.message || '';
@@ -3490,6 +3501,119 @@ function renderOperationsSection(operations, count, id, useTyping = false) {
       </div>
     </div>
   `;
+}
+
+// Render tasks section with progress ring - like the screenshot
+function renderTasksSection(tasks, title, id) {
+  if (!tasks || !tasks.length) return '';
+  
+  const completedCount = tasks.filter(t => t.completed).length;
+  const totalCount = tasks.length;
+  const progress = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
+  const radius = 18;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (progress / 100) * circumference;
+  const tasksId = `tasks-${id}-${Math.random().toString(36).substr(2, 9)}`;
+  
+  // Build task list HTML
+  const taskListHtml = tasks.map((task, index) => {
+    const isCompleted = task.completed;
+    const taskNum = index + 1;
+    
+    // Checkbox: empty circle for incomplete, blue filled with checkmark for complete
+    const checkboxSvg = isCompleted 
+      ? `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" style="flex-shrink: 0;">
+          <circle cx="12" cy="12" r="10" fill="#3b82f6" stroke="#3b82f6" stroke-width="2"/>
+          <path d="M8 12l3 3 5-6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </svg>`
+      : `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" style="flex-shrink: 0;">
+          <circle cx="12" cy="12" r="10" stroke="#d1d5db" stroke-width="2" fill="none"/>
+        </svg>`;
+    
+    const textStyle = isCompleted 
+      ? 'color: #6b7280; text-decoration: line-through;' 
+      : 'color: #374151;';
+    
+    return `
+      <div style="display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #f3f4f6; ${index === tasks.length - 1 ? 'border-bottom: none;' : ''}">
+        ${checkboxSvg}
+        <div style="display: flex; flex-direction: column; flex: 1;">
+          <span style="font-size: 14px; font-weight: 500; ${textStyle}">${escapeHtml(task.text)}</span>
+          ${task.description ? `<span style="font-size: 12px; color: #9ca3af; margin-top: 2px;">${escapeHtml(task.description)}</span>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+  
+  return `
+    <div style="margin: 8px 0; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; max-width: 480px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+      <!-- Header with progress ring -->
+      <div onclick="toggleTasksSection('${tasksId}', this)" style="cursor: pointer; display: flex; align-items: center; gap: 12px;">
+        <!-- Circular Progress Ring -->
+        <div style="position: relative; width: 40px; height: 40px; flex-shrink: 0;">
+          <svg width="40" height="40" viewBox="0 0 40 40" style="transform: rotate(-90deg);">
+            <!-- Background circle -->
+            <circle cx="20" cy="20" r="${radius}" fill="none" stroke="#e5e7eb" stroke-width="3"/>
+            <!-- Progress circle -->
+            <circle cx="20" cy="20" r="${radius}" fill="none" stroke="#3b82f6" stroke-width="3"
+              stroke-dasharray="${circumference}" stroke-dashoffset="${offset}" stroke-linecap="round"/>
+          </svg>
+          <!-- Progress text in center -->
+          <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 11px; font-weight: 600; color: #374151;">
+            ${completedCount}/${totalCount}
+          </div>
+        </div>
+        
+        <!-- Title and progress text -->
+        <div style="flex: 1; display: flex; flex-direction: column;">
+          <span style="font-size: 14px; font-weight: 600; color: #111827;">${escapeHtml(title || 'Tasks')}</span>
+          <span style="font-size: 12px; color: #6b7280;">${completedCount} / ${totalCount} tasks done</span>
+        </div>
+        
+        <!-- Expand/collapse arrow -->
+        <svg class="tasks-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: #9ca3af; transition: transform 0.2s;">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </div>
+      
+      <!-- Task list (collapsible) -->
+      <div id="${tasksId}" style="margin-top: 12px; padding-top: 8px; border-top: 1px solid #f3f4f6; max-height: 500px; overflow: hidden; transition: max-height 0.3s ease, opacity 0.3s ease; opacity: 1;">
+        ${taskListHtml}
+      </div>
+    </div>
+  `;
+}
+
+// Toggle tasks section
+function toggleTasksSection(contentId, headerEl) {
+  const content = document.getElementById(contentId);
+  const arrow = headerEl.querySelector('.tasks-arrow');
+  if (content && arrow) {
+    const isOpen = content.style.maxHeight !== '0px' && content.style.maxHeight !== '' && content.style.maxHeight !== 'none';
+    if (isOpen) {
+      content.style.maxHeight = content.scrollHeight + 'px';
+      content.style.opacity = '1';
+      setTimeout(() => {
+        content.style.maxHeight = '0';
+        content.style.opacity = '0';
+        content.style.paddingTop = '0';
+        content.style.marginTop = '0';
+        content.style.borderTop = 'none';
+      }, 10);
+      arrow.style.transform = 'rotate(0deg)';
+    } else {
+      content.style.maxHeight = '0';
+      content.style.opacity = '0';
+      content.style.paddingTop = '8px';
+      content.style.marginTop = '12px';
+      content.style.borderTop = '1px solid #f3f4f6';
+      setTimeout(() => {
+        content.style.maxHeight = '500px';
+        content.style.opacity = '1';
+      }, 10);
+      arrow.style.transform = 'rotate(180deg)';
+    }
+  }
 }
 
 // Render file content block (Cursor-style compact - only 3 lines)
