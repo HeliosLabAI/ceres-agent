@@ -1,10 +1,19 @@
+/* ============================================
+   CERES AI AGENT - PRODUCTION UI SYSTEM
+   Enhanced Dark Mode, Animations & Polish
+   ============================================ */
+
+/* Light Theme (Default) */
 :root {
   --bg: #f5f3ef;
   --bg-soft: #ebe8e3;
+  --bg-hover: rgba(0, 0, 0, 0.03);
   --panel: rgba(255, 255, 255, 0.9);
   --panel-strong: rgba(255, 255, 255, 0.96);
+  --panel-hover: rgba(255, 255, 255, 1);
   --stroke: #ece8e1;
   --stroke-soft: #f1eeea;
+  --stroke-strong: #ddd8cf;
   --text: #2a2a2a;
   --text-soft: #4a4a4a;
   --text-muted: #6b6b6b;
@@ -12,20 +21,26 @@
   --muted-soft: #a0a0a0;
   --accent: #3796fb;
   --accent-soft: #eef5ff;
+  --accent-hover: #1a7de6;
   --warning: #f58653;
+  --success: #22c55e;
+  --error: #ef4444;
   --plus-bg: #f1e5ff;
   --plus-text: #935df2;
   --shadow-sm: 0 1px 2px rgba(34, 28, 20, 0.04);
-  --shadow-md: 0 16px 40px rgba(34, 28, 20, 0.07);
-  --radius-xs: 8px;
+  --shadow-md: 0 4px 12px rgba(34, 28, 20, 0.08);
+  --shadow-lg: 0 16px 40px rgba(34, 28, 20, 0.12);
+  --shadow-xl: 0 24px 60px rgba(34, 28, 20, 0.16);
+  --radius-xs: 6px;
   --radius-sm: 10px;
   --radius-md: 14px;
   --radius-lg: 18px;
+  --radius-xl: 24px;
   --sidebar-width: 220px;
   --settings-nav-width: 176px;
   --multi-agent-gap: 20px;
-  --ui-font: "Segoe UI", system-ui, sans-serif;
-  --code-font: Consolas, "SFMono-Regular", monospace;
+  --ui-font: "Segoe UI", system-ui, -apple-system, sans-serif;
+  --code-font: "SF Mono", Monaco, "Cascadia Code", Consolas, monospace;
   --control-bg: rgba(247, 246, 243, 0.96);
   --control-hover: rgba(55, 150, 251, 0.12);
   --control-border: rgba(236, 232, 225, 0.92);
@@ -36,9 +51,326 @@
   --overlay-bg: rgba(255, 255, 255, 0.9);
   --code-bg: #f3f4f6;
   --code-muted-bg: #f9fafb;
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: rgba(0, 0, 0, 0.15);
+  --scrollbar-thumb-hover: rgba(0, 0, 0, 0.25);
+  --tooltip-bg: rgba(30, 30, 30, 0.95);
+  --tooltip-text: #ffffff;
+  --focus-ring: 0 0 0 3px rgba(55, 150, 251, 0.3);
+  --transition-fast: 150ms ease;
+  --transition-base: 250ms ease;
+  --transition-slow: 350ms ease;
   color-scheme: light;
   font-family: var(--ui-font);
 }
+
+/* Dark Theme */
+[data-theme="dark"] {
+  --bg: #0f0f0f;
+  --bg-soft: #1a1a1a;
+  --bg-hover: rgba(255, 255, 255, 0.05);
+  --panel: rgba(30, 30, 30, 0.95);
+  --panel-strong: rgba(35, 35, 35, 0.98);
+  --panel-hover: rgba(40, 40, 40, 1);
+  --stroke: #2a2a2a;
+  --stroke-soft: #252525;
+  --stroke-strong: #3a3a3a;
+  --text: #f0f0f0;
+  --text-soft: #c0c0c0;
+  --text-muted: #808080;
+  --muted: #606060;
+  --muted-soft: #505050;
+  --accent: #4da3ff;
+  --accent-soft: rgba(77, 163, 255, 0.15);
+  --accent-hover: #6bb3ff;
+  --warning: #ff9f5a;
+  --success: #4ade80;
+  --error: #f87171;
+  --plus-bg: rgba(147, 93, 242, 0.2);
+  --plus-text: #b794f6;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 24px 60px rgba(0, 0, 0, 0.6);
+  --sidebar-surface: linear-gradient(180deg, rgba(30, 30, 30, 0.9), rgba(20, 20, 20, 0.85));
+  --panel-bg: rgba(30, 30, 30, 0.9);
+  --panel-muted: rgba(25, 25, 25, 0.8);
+  --panel-border: rgba(60, 60, 60, 0.6);
+  --overlay-bg: rgba(20, 20, 20, 0.95);
+  --code-bg: #1e1e1e;
+  --code-muted-bg: #252525;
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: rgba(255, 255, 255, 0.2);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.3);
+  --tooltip-bg: rgba(255, 255, 255, 0.95);
+  --tooltip-text: #1a1a1a;
+  --focus-ring: 0 0 0 3px rgba(77, 163, 255, 0.4);
+  color-scheme: dark;
+}
+
+/* Animation Keyframes */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInScale {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(-12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+/* Skeleton Loading Animation */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-soft) 25%,
+    var(--stroke) 50%,
+    var(--bg-soft) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius-xs);
+}
+
+/* Smooth Theme Transition */
+*, *::before, *::after {
+  transition: background-color var(--transition-fast),
+              border-color var(--transition-fast),
+              color var(--transition-fast),
+              box-shadow var(--transition-fast),
+              transform var(--transition-fast),
+              opacity var(--transition-fast);
+}
+
+/* Enhanced Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Firefox Scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+/* Tooltip System */
+[data-tooltip] {
+  position: relative;
+}
+
+[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) scale(0.96);
+  padding: 6px 10px;
+  background: var(--tooltip-bg);
+  color: var(--tooltip-text);
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: var(--radius-xs);
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all var(--transition-fast);
+  pointer-events: none;
+  z-index: 1000;
+  box-shadow: var(--shadow-md);
+}
+
+[data-tooltip]:hover::after {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) scale(1);
+}
+
+[data-tooltip][data-tooltip-pos="bottom"]::after {
+  bottom: auto;
+  top: calc(100% + 8px);
+}
+
+[data-tooltip][data-tooltip-pos="left"]::after {
+  bottom: auto;
+  left: auto;
+  right: calc(100% + 8px);
+  top: 50%;
+  transform: translateY(-50%) scale(0.96);
+}
+
+[data-tooltip][data-tooltip-pos="left"]:hover::after {
+  transform: translateY(-50%) scale(1);
+}
+
+[data-tooltip][data-tooltip-pos="right"]::after {
+  bottom: auto;
+  left: calc(100% + 8px);
+  top: 50%;
+  transform: translateY(-50%) scale(0.96);
+}
+
+[data-tooltip][data-tooltip-pos="right"]:hover::after {
+  transform: translateY(-50%) scale(1);
+}
+
+/* Focus States */
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[tabindex]:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* Selection Styling */
+::selection {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* Enhanced Button Base */
+button {
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Card Hover Effect */
+.card-hover {
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Glass Morphism Effect */
+.glass {
+  background: var(--panel);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* Animated Underline for Links */
+.link-animated {
+  position: relative;
+  text-decoration: none;
+}
+
+.link-animated::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--accent);
+  transition: width var(--transition-base);
+}
+
+.link-animated:hover::after {
+  width: 100%;
+}
+
+/* Status Indicators */
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-dot.success { background: var(--success); box-shadow: 0 0 8px var(--success); }
+.status-dot.warning { background: var(--warning); box-shadow: 0 0 8px var(--warning); }
+.status-dot.error { background: var(--error); box-shadow: 0 0 8px var(--error); }
+.status-dot.active { 
+  background: var(--success); 
+  animation: pulse 2s infinite;
+}
+
+/* Loading Spinner */
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--stroke);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* Fade In Animation Classes */
+.animate-fade-in { animation: fadeIn var(--transition-base) forwards; }
+.animate-fade-in-scale { animation: fadeInScale var(--transition-base) forwards; }
+.animate-slide-in-right { animation: slideInRight var(--transition-base) forwards; }
+.animate-slide-in-up { animation: slideInUp var(--transition-base) forwards; }
+
+/* Stagger Animation Delays */
+.stagger-1 { animation-delay: 50ms; }
+.stagger-2 { animation-delay: 100ms; }
+.stagger-3 { animation-delay: 150ms; }
+.stagger-4 { animation-delay: 200ms; }
+.stagger-5 { animation-delay: 250ms; }
 
 * {
   box-sizing: border-box;
@@ -1168,15 +1500,15 @@ h1 {
 .composer-card {
   width: 100%;
   max-width: 680px;
-  background: transparent;
-  border: none;
-  border-radius: 6px;
-  box-shadow: none;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 16px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
 }
 
 .composer-card.connected {
   border-top: none;
-  border-radius: 0 0 6px 6px;
+  border-radius: 0 0 16px 16px;
 }
 
 .composer-card.compact {
@@ -4945,4 +5277,331 @@ h1 {
 
 .terminal-output::-webkit-scrollbar-thumb:hover {
   background: #aaaaaa;
+}
+
+/* ============================================
+   PRODUCTION UI ENHANCEMENTS
+   Theme Support, Animations & Polish
+   ============================================ */
+
+/* Theme Toggle Button */
+.theme-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-xs);
+  color: var(--text-muted);
+  transition: all var(--transition-fast);
+}
+
+.theme-toggle-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+  transform: scale(1.05);
+}
+
+.theme-toggle-btn:active {
+  transform: scale(0.95);
+}
+
+/* Enhanced Button Interactions */
+button:not(:disabled) {
+  transition: transform var(--transition-fast),
+              background-color var(--transition-fast),
+              box-shadow var(--transition-fast);
+}
+
+button:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+button:not(:disabled):active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* Glass Morphism Panels */
+.glass-panel {
+  background: var(--panel);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--panel-border);
+}
+
+/* Enhanced Title Bar */
+.title-bar {
+  background: var(--sidebar-surface);
+  border-bottom: 1px solid var(--stroke);
+}
+
+/* Improved Sidebar Animations */
+.left-sidebar,
+.file-explorer-sidebar {
+  transition: transform var(--transition-base),
+              width var(--transition-base),
+              opacity var(--transition-base);
+}
+
+/* Chat Message Animations */
+.chat-message {
+  animation: fadeIn var(--transition-base) ease-out;
+}
+
+.chat-message.user {
+  animation: slideInRight var(--transition-base) ease-out;
+}
+
+.chat-message.ai {
+  animation: slideInUp var(--transition-base) ease-out;
+}
+
+/* Enhanced Input Area */
+.prompt-box {
+  background: var(--panel);
+  border: 1px solid var(--stroke);
+  transition: border-color var(--transition-fast),
+              box-shadow var(--transition-fast);
+}
+
+.prompt-box:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+/* Improved Navigation Items */
+.nav-item {
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--accent);
+  transform: scaleY(0);
+  transition: transform var(--transition-fast);
+}
+
+.nav-item:hover::before,
+.nav-item.active::before {
+  transform: scaleY(1);
+}
+
+/* File Explorer Enhancements */
+.file-item {
+  position: relative;
+  transition: all var(--transition-fast);
+}
+
+.file-item::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--accent);
+  opacity: 0;
+  border-radius: var(--radius-xs);
+  transition: opacity var(--transition-fast);
+  z-index: -1;
+}
+
+.file-item:hover::after {
+  opacity: 0.08;
+}
+
+.file-item.selected::after {
+  opacity: 0.15;
+}
+
+/* Terminal Enhancements */
+.terminal-panel {
+  background: var(--code-bg);
+  border-top: 1px solid var(--stroke);
+}
+
+.terminal-output .output-line {
+  animation: fadeIn var(--transition-fast) ease-out;
+}
+
+/* Settings Panel Enhancements */
+.settings-nav-item {
+  position: relative;
+  transition: all var(--transition-fast);
+}
+
+.settings-nav-item::after {
+  content: '';
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%) scale(0);
+  width: 6px;
+  height: 6px;
+  background: var(--accent);
+  border-radius: 50%;
+  transition: transform var(--transition-fast);
+}
+
+.settings-nav-item.active::after {
+  transform: translateY(-50%) scale(1);
+}
+
+/* Modal Enhancements */
+.modal-overlay {
+  animation: fadeIn var(--transition-base) ease-out;
+}
+
+.modal-content {
+  animation: fadeInScale var(--transition-base) ease-out;
+}
+
+/* Toast/Notification Animations */
+.notification {
+  animation: slideInUp var(--transition-base) ease-out;
+}
+
+.notification.hiding {
+  animation: fadeIn var(--transition-fast) ease-out reverse forwards;
+}
+
+/* Loading States */
+.loading-spinner {
+  animation: spin 1s linear infinite;
+}
+
+/* Status Indicators */
+.status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.status-indicator::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.status-indicator.online::before {
+  background: var(--success);
+  box-shadow: 0 0 8px var(--success);
+  animation: pulse 2s infinite;
+}
+
+.status-indicator.offline::before {
+  background: var(--error);
+}
+
+.status-indicator.busy::before {
+  background: var(--warning);
+}
+
+/* Hover Card Effects */
+.hover-lift {
+  transition: transform var(--transition-base),
+              box-shadow var(--transition-base);
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Gradient Text */
+.gradient-text {
+  background: linear-gradient(135deg, var(--accent), var(--plus-text));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Enhanced Scrollbar for Code Areas */
+.code-block::-webkit-scrollbar,
+pre::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.code-block::-webkit-scrollbar-thumb,
+pre::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 4px;
+}
+
+.code-block::-webkit-scrollbar-thumb:hover,
+pre::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+/* Focus Visible Enhancements */
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[tabindex]:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: var(--radius-xs);
+}
+
+/* Dark Mode Specific Adjustments */
+[data-theme="dark"] .terminal-input-line {
+  background: var(--bg-soft);
+  border-top-color: var(--stroke);
+}
+
+[data-theme="dark"] .terminal-prompt {
+  color: var(--success);
+}
+
+[data-theme="dark"] .terminal-output .output-line.command {
+  color: var(--accent);
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+  :root {
+    --stroke: rgba(0, 0, 0, 0.5);
+    --text: #000000;
+  }
+  
+  [data-theme="dark"] {
+    --stroke: rgba(255, 255, 255, 0.5);
+    --text: #ffffff;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .title-bar,
+  .left-sidebar,
+  .file-explorer-sidebar,
+  .terminal-panel,
+  .prompt-box {
+    display: none !important;
+  }
+  
+  .chat-container {
+    height: auto;
+    overflow: visible;
+  }
 }

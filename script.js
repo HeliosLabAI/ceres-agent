@@ -6,6 +6,53 @@ const state = {
 
 let showToast; // Will be set as alias to showNotification
 
+// Theme Management
+const THEME_STORAGE_KEY = 'ceres-theme-preference';
+
+function getStoredTheme() {
+  return localStorage.getItem(THEME_STORAGE_KEY) || 'light';
+}
+
+function setStoredTheme(theme) {
+  localStorage.setItem(THEME_STORAGE_KEY, theme);
+}
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  
+  // Update toggle button icons
+  const lightIcon = document.querySelector('.theme-icon-light');
+  const darkIcon = document.querySelector('.theme-icon-dark');
+  if (lightIcon && darkIcon) {
+    lightIcon.style.display = theme === 'dark' ? 'none' : 'block';
+    darkIcon.style.display = theme === 'dark' ? 'block' : 'none';
+  }
+}
+
+function toggleTheme() {
+  const currentTheme = getStoredTheme();
+  const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  
+  setStoredTheme(newTheme);
+  applyTheme(newTheme);
+  
+  // Show notification
+  if (typeof showNotification === 'function') {
+    showNotification(`Switched to ${newTheme} mode`, 'success');
+  }
+}
+
+function initializeTheme() {
+  const savedTheme = getStoredTheme();
+  applyTheme(savedTheme);
+  
+  // Setup toggle button listener
+  const themeToggle = document.getElementById('themeToggle');
+  if (themeToggle) {
+    themeToggle.addEventListener('click', toggleTheme);
+  }
+}
+
 const SETTINGS_STORAGE_KEY = 'ceresReplicaSettings';
 
 const defaultSettings = {
@@ -1057,6 +1104,9 @@ document.addEventListener('click', (e) => {
 document.addEventListener('DOMContentLoaded', () => {
   try {
   console.log('DOMContentLoaded fired');
+  
+  // Initialize theme
+  initializeTheme();
   
   // Load Ollama models
   loadOllamaModelsToDropdown();
