@@ -310,12 +310,7 @@ TERMINAL COMMANDS - CRITICAL:
         
         // Show planning only once at start (first iteration only)
         if (decision.plan?.length > 0 && !this.planningShown) {
-          this.emitToUI("planning", {
-            plan: decision.plan,
-            current: decision.current_step
-          });
-          
-          // Auto-create task list for complex projects (3+ steps)
+          // Auto-create task list for complex projects (3+ steps) - this replaces Planning next moves
           if (decision.plan.length >= 3) {
             this.emitToUI("tasks", {
               title: decision.goal || "Project Tasks",
@@ -325,6 +320,12 @@ TERMINAL COMMANDS - CRITICAL:
                 description: typeof step === 'string' ? '' : (step.details || ''),
                 completed: i < (decision.current_step || 0)
               }))
+            });
+          } else {
+            // For simple plans (< 3 steps), show the collapsible Planning next moves
+            this.emitToUI("planning", {
+              plan: decision.plan,
+              current: decision.current_step
             });
           }
           
